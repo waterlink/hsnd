@@ -1,0 +1,10 @@
+#main {
+    font-family: monospace;
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+#main > p {
+    letter-spacing: 0.25em;
+    line-height: 0.0675em;
+}
