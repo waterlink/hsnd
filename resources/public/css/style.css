@@ -1,10 +1,33 @@
+body {
+    margin-top: 0;
+}
+
 #main {
     font-family: monospace;
     font-size: 10pt;
     font-weight: bold;
+    float: left;
 }
 
 #main > p {
     letter-spacing: 0.25em;
     line-height: 0.0675em;
+}
+
+#sidebar {
+    position: relative;
+    padding-top: 15px;
+    padding-left: 15px;
+    display: inline-block;
+    height: 33em;
+    width: 10em;
+}
+
+#message-log {
+    font-size: 9pt;
+    position: absolute;
+    bottom: 0;
+    height: 15em;
+    width: 100%;
+    overflow-y: auto;
 }
