@@ -72,6 +72,8 @@
   (let [tile (entity/get entity "tile")
         position (entity/get entity "position")
         camera-position (entity/get camera "position")
+        camera-position-of-death (entity/get camera "position-of-death")
+        camera-position (if (nil? camera-position) camera-position-of-death camera-position)
         boundaries (camera-boundaries camera-position)]
     (if (and (not (nil? position)) (in-boundaries? boundaries position))
       (draw-tile

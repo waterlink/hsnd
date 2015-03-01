@@ -20,18 +20,24 @@
                      (component/get loot :value)
                      entity))))
 
+(defn- log-death
+  [entity]
+  (callback/emit :log-message (str (entity :name) " dies")))
+
 (defn- handle-death
   [entity]
   (let [health-component (entity/get entity "health")
         health (component/get health-component :value)
         dead? (-> health (<= 0))
-        dead-component (entity/get entity "dead")
-        not-handled-death? (nil? dead-component)]
+        not-handled-death? (nil? (entity/get entity "dead"))]
     (if (-> dead? (and not-handled-death?))
-      (do
+      (let [position-hash (component/get-hash (entity/get entity "position"))]
         (handle-loot entity)
         (entity/remove entity "position")
-        (entity/add entity "dead" {})))))
+        (entity/remove entity "next-position")
+        (entity/add entity "dead" {})
+        (entity/add entity "position-of-death" position-hash)
+        (log-death entity)))))
 
 (defn update
   []

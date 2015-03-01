@@ -34,21 +34,21 @@
 (defn update-entity
   [entity]
   (let [{dx :dx dy :dy} (-> (entity/get entity "player-controlled") (component/get-hash))
-        position (entity/get entity "position")
-        next-position (entity/get-with-defaults entity
-                                                "next-position"
-                                                (component/get-hash position))]
+        position (entity/get entity "position")]
     (if-not (nil? position)
-      (if (or (not= 0 dx) (not= 0 dy))
-        (let [{x :x y :y} (component/get-hash position)
-              nx (+ x dx)
-              ny (+ y dy)]
-          (component/reset next-position {:x nx :y ny}))))))
+      (let [next-position (entity/get-with-defaults
+                           entity
+                           "next-position"
+                           (component/get-hash position))]
+        (if (or (not= 0 dx) (not= 0 dy))
+          (let [{x :x y :y} (component/get-hash position)
+                nx (+ x dx)
+                ny (+ y dy)]
+            (component/reset next-position {:x nx :y ny})))))))
 
 (defn update
   []
-  (let [entities (component/entities (component/by-name "player-controlled"))]
-    (doall (map #(update-entity %) entities))))
+  (entity/each "player-controlled" update-entity))
 
 (def system {:init init
              :update update

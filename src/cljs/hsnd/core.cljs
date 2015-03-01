@@ -7,6 +7,7 @@
             [hsnd.systems.battle :as battle]
             [hsnd.systems.death :as death]
             [hsnd.systems.loot :as loot]
+            [hsnd.systems.melee-ai :as melee-ai]
             [hsnd.systems.log :as log]
             [hsnd.callback :as callback]
             [hsnd.initial :as initial]
@@ -23,6 +24,7 @@
               battle/system
               death/system
               loot/system
+              melee-ai/system
               log/system])
 
 (doall (map #((% :init)) systems))

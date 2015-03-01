@@ -13,6 +13,10 @@
   [damage name]
   (callback/emit :log-message (str "you inflicted " damage " damage to " name)))
 
+(defn- log-damage-by-enemy
+  [damage name]
+  (callback/emit :log-message (str name " inflicted " damage " damage to you")))
+
 (defn- inflict-damage
   [damage entity]
   (let [health-component (entity/get entity "health")
@@ -27,15 +31,20 @@
   [entity other-entity]
   (let [entity-name (entity :name)
         other-name (other-entity :name)
-        player? (= "player" entity-name)
-        other-enemy-component (entity/get other-entity "enemy")
-        other-enemy? (not (nil? other-enemy-component))
+        player? (not (nil? (entity/get entity "player")))
+        enemy? (not (nil? (entity/get entity "enemy")))
+        other-player? (not (nil? (entity/get other-entity "player")))
+        other-enemy? (not (nil? (entity/get other-entity "enemy")))
         damage-component (entity/get entity "damage")
         has-damage? (not (nil? damage-component))]
     (if (-> player? (and other-enemy?) (and has-damage?))
       (let [damage (component/get damage-component :value)]
         (inflict-damage damage other-entity)
-        (log-damage-by-player (component/get damage-component :value) other-name)))))
+        (log-damage-by-player damage other-name)))
+    (if (-> enemy? (and other-player?) (and has-damage?))
+      (let [damage (component/get damage-component :value)]
+        (inflict-damage damage other-entity)
+        (log-damage-by-enemy damage entity-name)))))
 
 (def system {:init init
              :draw draw

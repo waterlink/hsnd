@@ -29,8 +29,10 @@
   "Removes a component from entity"
   [entity name]
   (let [component (get entity name)]
-    (component/remove component)
-    (-> (entity :components) (swap! dissoc name))))
+    (if (not (nil? component))
+      (do
+        (component/remove component)
+        (-> (entity :components) (swap! dissoc name))))))
 
 (defn entities-with
   [component-name]

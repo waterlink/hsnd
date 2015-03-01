@@ -23,3 +23,12 @@
   - [x] Target drops certain entities when dead
   - [x] Dropped entities are passable
   - [x] Prefer drawing passable objects before other
+  - [x] Death is logged
+
+- [x] Melee AI:
+  - [x] Enemy has sight radius and damage
+  - [x] Player has health
+  - [x] Enemy chases player if it is in radius
+  - [x] Enemy bumps to the player to damage him
+  - [x] Battle system actually can handle inflicting enemy -> player
+  - [x] Player can die
