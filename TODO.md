@@ -42,10 +42,10 @@
   - [x] Resurrection stone deflects all enemies that try to enter its area radius when active
   - [x] Enemies can still inflict damage if player come close to them
 
-- [ ] Stats:
+- [x] Stats:
   - [x] Render current position
-  - [ ] Show health in sidebar
-  - [ ] Show resurrection countdown
+  - [x] Show health in sidebar
+  - [x] Show resurrection countdown
 
 - [ ] Inventory:
   - [ ] Player can pickup items

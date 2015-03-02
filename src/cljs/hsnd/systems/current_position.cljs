@@ -24,7 +24,7 @@
 
 (defn draw
   []
-  (entity/each "player-controlled" draw-player-position))
+  (entity/each "player" draw-player-position))
 
 (def system {:init init
              :draw draw

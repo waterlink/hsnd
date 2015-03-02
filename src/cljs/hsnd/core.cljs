@@ -5,6 +5,7 @@
             [hsnd.systems.collision :as collision]
             [hsnd.systems.blocked :as blocked]
             [hsnd.systems.battle :as battle]
+            [hsnd.systems.stats :as stats]
             [hsnd.systems.death :as death]
             [hsnd.systems.resurrection :as resurrection]
             [hsnd.systems.loot :as loot]
@@ -20,6 +21,7 @@
 
 (def systems [draw/system
               current-position/system
+              stats/system
               control/system
               collision/system
               resurrection/system
