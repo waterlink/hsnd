@@ -32,3 +32,21 @@
   - [x] Enemy bumps to the player to damage him
   - [x] Battle system actually can handle inflicting enemy -> player
   - [x] Player can die
+
+- [x] Resurrection system:
+  - [x] Add resurrection stone which is active
+  - [x] Player gets resurrected on the stone in 250 turns after death
+  - [x] Resurrection emits log message
+  - [x] Touching different resurrection stone deactivates previous and activates current
+  - [x] Touching different resurrection stone emits log message
+  - [x] Resurrection stone deflects all enemies that try to enter its area radius when active
+  - [x] Enemies can still inflict damage if player come close to them
+
+- [ ] Stats:
+  - [x] Render current position
+  - [ ] Show health in sidebar
+  - [ ] Show resurrection countdown
+
+- [ ] Inventory:
+  - [ ] Player can pickup items
+  - [ ] Item list is shown in sidebar

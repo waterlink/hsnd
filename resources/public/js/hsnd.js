@@ -34366,11 +34366,6 @@ hsnd.systems.battle.handle_collision = function handle_collision(entity, other_e
 };
 hsnd.systems.battle.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.battle.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.battle.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.battle.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.battle.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.battle.keyup, 
 new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.battle.handle_collision], null)], null);
-goog.provide("goog.dom.TagName");
-goog.dom.TagName = {A:"A", ABBR:"ABBR", ACRONYM:"ACRONYM", ADDRESS:"ADDRESS", APPLET:"APPLET", AREA:"AREA", ARTICLE:"ARTICLE", ASIDE:"ASIDE", AUDIO:"AUDIO", B:"B", BASE:"BASE", BASEFONT:"BASEFONT", BDI:"BDI", BDO:"BDO", BIG:"BIG", BLOCKQUOTE:"BLOCKQUOTE", BODY:"BODY", BR:"BR", BUTTON:"BUTTON", CANVAS:"CANVAS", CAPTION:"CAPTION", CENTER:"CENTER", CITE:"CITE", CODE:"CODE", COL:"COL", COLGROUP:"COLGROUP", COMMAND:"COMMAND", DATA:"DATA", DATALIST:"DATALIST", DD:"DD", DEL:"DEL", DETAILS:"DETAILS", DFN:"DFN", 
-DIALOG:"DIALOG", DIR:"DIR", DIV:"DIV", DL:"DL", DT:"DT", EM:"EM", EMBED:"EMBED", FIELDSET:"FIELDSET", FIGCAPTION:"FIGCAPTION", FIGURE:"FIGURE", FONT:"FONT", FOOTER:"FOOTER", FORM:"FORM", FRAME:"FRAME", FRAMESET:"FRAMESET", H1:"H1", H2:"H2", H3:"H3", H4:"H4", H5:"H5", H6:"H6", HEAD:"HEAD", HEADER:"HEADER", HGROUP:"HGROUP", HR:"HR", HTML:"HTML", I:"I", IFRAME:"IFRAME", IMG:"IMG", INPUT:"INPUT", INS:"INS", ISINDEX:"ISINDEX", KBD:"KBD", KEYGEN:"KEYGEN", LABEL:"LABEL", LEGEND:"LEGEND", LI:"LI", LINK:"LINK", 
-MAP:"MAP", MARK:"MARK", MATH:"MATH", MENU:"MENU", META:"META", METER:"METER", NAV:"NAV", NOFRAMES:"NOFRAMES", NOSCRIPT:"NOSCRIPT", OBJECT:"OBJECT", OL:"OL", OPTGROUP:"OPTGROUP", OPTION:"OPTION", OUTPUT:"OUTPUT", P:"P", PARAM:"PARAM", PRE:"PRE", PROGRESS:"PROGRESS", Q:"Q", RP:"RP", RT:"RT", RUBY:"RUBY", S:"S", SAMP:"SAMP", SCRIPT:"SCRIPT", SECTION:"SECTION", SELECT:"SELECT", SMALL:"SMALL", SOURCE:"SOURCE", SPAN:"SPAN", STRIKE:"STRIKE", STRONG:"STRONG", STYLE:"STYLE", SUB:"SUB", SUMMARY:"SUMMARY", 
-SUP:"SUP", SVG:"SVG", TABLE:"TABLE", TBODY:"TBODY", TD:"TD", TEXTAREA:"TEXTAREA", TFOOT:"TFOOT", TH:"TH", THEAD:"THEAD", TIME:"TIME", TITLE:"TITLE", TR:"TR", TRACK:"TRACK", TT:"TT", U:"U", UL:"UL", VAR:"VAR", VIDEO:"VIDEO", WBR:"WBR"};
 goog.provide("goog.functions");
 goog.functions.constant = function(retValue) {
   return function() {
@@ -34484,6 +34479,947 @@ goog.functions.cacheReturnValue = function(fn) {
     return value;
   };
 };
+goog.provide("goog.iter");
+goog.provide("goog.iter.Iterable");
+goog.provide("goog.iter.Iterator");
+goog.provide("goog.iter.StopIteration");
+goog.require("goog.array");
+goog.require("goog.asserts");
+goog.require("goog.functions");
+goog.require("goog.math");
+goog.iter.Iterable;
+if ("StopIteration" in goog.global) {
+  goog.iter.StopIteration = goog.global["StopIteration"];
+} else {
+  goog.iter.StopIteration = Error("StopIteration");
+}
+goog.iter.Iterator = function() {
+};
+goog.iter.Iterator.prototype.next = function() {
+  throw goog.iter.StopIteration;
+};
+goog.iter.Iterator.prototype.__iterator__ = function(opt_keys) {
+  return this;
+};
+goog.iter.toIterator = function(iterable) {
+  if (iterable instanceof goog.iter.Iterator) {
+    return iterable;
+  }
+  if (typeof iterable.__iterator__ == "function") {
+    return iterable.__iterator__(false);
+  }
+  if (goog.isArrayLike(iterable)) {
+    var i = 0;
+    var newIter = new goog.iter.Iterator;
+    newIter.next = function() {
+      while (true) {
+        if (i >= iterable.length) {
+          throw goog.iter.StopIteration;
+        }
+        if (!(i in iterable)) {
+          i++;
+          continue;
+        }
+        return iterable[i++];
+      }
+    };
+    return newIter;
+  }
+  throw Error("Not implemented");
+};
+goog.iter.forEach = function(iterable, f, opt_obj) {
+  if (goog.isArrayLike(iterable)) {
+    try {
+      goog.array.forEach((iterable), f, opt_obj);
+    } catch (ex) {
+      if (ex !== goog.iter.StopIteration) {
+        throw ex;
+      }
+    }
+  } else {
+    iterable = goog.iter.toIterator(iterable);
+    try {
+      while (true) {
+        f.call(opt_obj, iterable.next(), undefined, iterable);
+      }
+    } catch (ex) {
+      if (ex !== goog.iter.StopIteration) {
+        throw ex;
+      }
+    }
+  }
+};
+goog.iter.filter = function(iterable, f, opt_obj) {
+  var iterator = goog.iter.toIterator(iterable);
+  var newIter = new goog.iter.Iterator;
+  newIter.next = function() {
+    while (true) {
+      var val = iterator.next();
+      if (f.call(opt_obj, val, undefined, iterator)) {
+        return val;
+      }
+    }
+  };
+  return newIter;
+};
+goog.iter.filterFalse = function(iterable, f, opt_obj) {
+  return goog.iter.filter(iterable, goog.functions.not(f), opt_obj);
+};
+goog.iter.range = function(startOrStop, opt_stop, opt_step) {
+  var start = 0;
+  var stop = startOrStop;
+  var step = opt_step || 1;
+  if (arguments.length > 1) {
+    start = startOrStop;
+    stop = opt_stop;
+  }
+  if (step == 0) {
+    throw Error("Range step argument must not be zero");
+  }
+  var newIter = new goog.iter.Iterator;
+  newIter.next = function() {
+    if (step > 0 && start >= stop || step < 0 && start <= stop) {
+      throw goog.iter.StopIteration;
+    }
+    var rv = start;
+    start += step;
+    return rv;
+  };
+  return newIter;
+};
+goog.iter.join = function(iterable, deliminator) {
+  return goog.iter.toArray(iterable).join(deliminator);
+};
+goog.iter.map = function(iterable, f, opt_obj) {
+  var iterator = goog.iter.toIterator(iterable);
+  var newIter = new goog.iter.Iterator;
+  newIter.next = function() {
+    var val = iterator.next();
+    return f.call(opt_obj, val, undefined, iterator);
+  };
+  return newIter;
+};
+goog.iter.reduce = function(iterable, f, val, opt_obj) {
+  var rval = val;
+  goog.iter.forEach(iterable, function(val) {
+    rval = f.call(opt_obj, rval, val);
+  });
+  return rval;
+};
+goog.iter.some = function(iterable, f, opt_obj) {
+  iterable = goog.iter.toIterator(iterable);
+  try {
+    while (true) {
+      if (f.call(opt_obj, iterable.next(), undefined, iterable)) {
+        return true;
+      }
+    }
+  } catch (ex) {
+    if (ex !== goog.iter.StopIteration) {
+      throw ex;
+    }
+  }
+  return false;
+};
+goog.iter.every = function(iterable, f, opt_obj) {
+  iterable = goog.iter.toIterator(iterable);
+  try {
+    while (true) {
+      if (!f.call(opt_obj, iterable.next(), undefined, iterable)) {
+        return false;
+      }
+    }
+  } catch (ex) {
+    if (ex !== goog.iter.StopIteration) {
+      throw ex;
+    }
+  }
+  return true;
+};
+goog.iter.chain = function(var_args) {
+  var iterator = goog.iter.toIterator(arguments);
+  var iter = new goog.iter.Iterator;
+  var current = null;
+  iter.next = function() {
+    while (true) {
+      if (current == null) {
+        var it = iterator.next();
+        current = goog.iter.toIterator(it);
+      }
+      try {
+        return current.next();
+      } catch (ex) {
+        if (ex !== goog.iter.StopIteration) {
+          throw ex;
+        }
+        current = null;
+      }
+    }
+  };
+  return iter;
+};
+goog.iter.chainFromIterable = function(iterable) {
+  return goog.iter.chain.apply(undefined, iterable);
+};
+goog.iter.dropWhile = function(iterable, f, opt_obj) {
+  var iterator = goog.iter.toIterator(iterable);
+  var newIter = new goog.iter.Iterator;
+  var dropping = true;
+  newIter.next = function() {
+    while (true) {
+      var val = iterator.next();
+      if (dropping && f.call(opt_obj, val, undefined, iterator)) {
+        continue;
+      } else {
+        dropping = false;
+      }
+      return val;
+    }
+  };
+  return newIter;
+};
+goog.iter.takeWhile = function(iterable, f, opt_obj) {
+  var iterator = goog.iter.toIterator(iterable);
+  var newIter = new goog.iter.Iterator;
+  var taking = true;
+  newIter.next = function() {
+    while (true) {
+      if (taking) {
+        var val = iterator.next();
+        if (f.call(opt_obj, val, undefined, iterator)) {
+          return val;
+        } else {
+          taking = false;
+        }
+      } else {
+        throw goog.iter.StopIteration;
+      }
+    }
+  };
+  return newIter;
+};
+goog.iter.toArray = function(iterable) {
+  if (goog.isArrayLike(iterable)) {
+    return goog.array.toArray((iterable));
+  }
+  iterable = goog.iter.toIterator(iterable);
+  var array = [];
+  goog.iter.forEach(iterable, function(val) {
+    array.push(val);
+  });
+  return array;
+};
+goog.iter.equals = function(iterable1, iterable2) {
+  var fillValue = {};
+  var pairs = goog.iter.zipLongest(fillValue, iterable1, iterable2);
+  return goog.iter.every(pairs, function(pair) {
+    return pair[0] == pair[1];
+  });
+};
+goog.iter.nextOrValue = function(iterable, defaultValue) {
+  try {
+    return goog.iter.toIterator(iterable).next();
+  } catch (e) {
+    if (e != goog.iter.StopIteration) {
+      throw e;
+    }
+    return defaultValue;
+  }
+};
+goog.iter.product = function(var_args) {
+  var someArrayEmpty = goog.array.some(arguments, function(arr) {
+    return!arr.length;
+  });
+  if (someArrayEmpty || !arguments.length) {
+    return new goog.iter.Iterator;
+  }
+  var iter = new goog.iter.Iterator;
+  var arrays = arguments;
+  var indicies = goog.array.repeat(0, arrays.length);
+  iter.next = function() {
+    if (indicies) {
+      var retVal = goog.array.map(indicies, function(valueIndex, arrayIndex) {
+        return arrays[arrayIndex][valueIndex];
+      });
+      for (var i = indicies.length - 1;i >= 0;i--) {
+        goog.asserts.assert(indicies);
+        if (indicies[i] < arrays[i].length - 1) {
+          indicies[i]++;
+          break;
+        }
+        if (i == 0) {
+          indicies = null;
+          break;
+        }
+        indicies[i] = 0;
+      }
+      return retVal;
+    }
+    throw goog.iter.StopIteration;
+  };
+  return iter;
+};
+goog.iter.cycle = function(iterable) {
+  var baseIterator = goog.iter.toIterator(iterable);
+  var cache = [];
+  var cacheIndex = 0;
+  var iter = new goog.iter.Iterator;
+  var useCache = false;
+  iter.next = function() {
+    var returnElement = null;
+    if (!useCache) {
+      try {
+        returnElement = baseIterator.next();
+        cache.push(returnElement);
+        return returnElement;
+      } catch (e) {
+        if (e != goog.iter.StopIteration || goog.array.isEmpty(cache)) {
+          throw e;
+        }
+        useCache = true;
+      }
+    }
+    returnElement = cache[cacheIndex];
+    cacheIndex = (cacheIndex + 1) % cache.length;
+    return returnElement;
+  };
+  return iter;
+};
+goog.iter.count = function(opt_start, opt_step) {
+  var counter = opt_start || 0;
+  var step = goog.isDef(opt_step) ? opt_step : 1;
+  var iter = new goog.iter.Iterator;
+  iter.next = function() {
+    var returnValue = counter;
+    counter += step;
+    return returnValue;
+  };
+  return iter;
+};
+goog.iter.repeat = function(value) {
+  var iter = new goog.iter.Iterator;
+  iter.next = goog.functions.constant(value);
+  return iter;
+};
+goog.iter.accumulate = function(iterable) {
+  var iterator = goog.iter.toIterator(iterable);
+  var total = 0;
+  var iter = new goog.iter.Iterator;
+  iter.next = function() {
+    total += iterator.next();
+    return total;
+  };
+  return iter;
+};
+goog.iter.zip = function(var_args) {
+  var args = arguments;
+  var iter = new goog.iter.Iterator;
+  if (args.length > 0) {
+    var iterators = goog.array.map(args, goog.iter.toIterator);
+    iter.next = function() {
+      var arr = goog.array.map(iterators, function(it) {
+        return it.next();
+      });
+      return arr;
+    };
+  }
+  return iter;
+};
+goog.iter.zipLongest = function(fillValue, var_args) {
+  var args = goog.array.slice(arguments, 1);
+  var iter = new goog.iter.Iterator;
+  if (args.length > 0) {
+    var iterators = goog.array.map(args, goog.iter.toIterator);
+    iter.next = function() {
+      var iteratorsHaveValues = false;
+      var arr = goog.array.map(iterators, function(it) {
+        var returnValue;
+        try {
+          returnValue = it.next();
+          iteratorsHaveValues = true;
+        } catch (ex) {
+          if (ex !== goog.iter.StopIteration) {
+            throw ex;
+          }
+          returnValue = fillValue;
+        }
+        return returnValue;
+      });
+      if (!iteratorsHaveValues) {
+        throw goog.iter.StopIteration;
+      }
+      return arr;
+    };
+  }
+  return iter;
+};
+goog.iter.compress = function(iterable, selectors) {
+  var selectorIterator = goog.iter.toIterator(selectors);
+  return goog.iter.filter(iterable, function() {
+    return!!selectorIterator.next();
+  });
+};
+goog.iter.GroupByIterator_ = function(iterable, opt_keyFunc) {
+  this.iterator = goog.iter.toIterator(iterable);
+  this.keyFunc = opt_keyFunc || goog.functions.identity;
+  this.targetKey;
+  this.currentKey;
+  this.currentValue;
+};
+goog.inherits(goog.iter.GroupByIterator_, goog.iter.Iterator);
+goog.iter.GroupByIterator_.prototype.next = function() {
+  while (this.currentKey == this.targetKey) {
+    this.currentValue = this.iterator.next();
+    this.currentKey = this.keyFunc(this.currentValue);
+  }
+  this.targetKey = this.currentKey;
+  return[this.currentKey, this.groupItems_(this.targetKey)];
+};
+goog.iter.GroupByIterator_.prototype.groupItems_ = function(targetKey) {
+  var arr = [];
+  while (this.currentKey == targetKey) {
+    arr.push(this.currentValue);
+    try {
+      this.currentValue = this.iterator.next();
+    } catch (ex) {
+      if (ex !== goog.iter.StopIteration) {
+        throw ex;
+      }
+      break;
+    }
+    this.currentKey = this.keyFunc(this.currentValue);
+  }
+  return arr;
+};
+goog.iter.groupBy = function(iterable, opt_keyFunc) {
+  return new goog.iter.GroupByIterator_(iterable, opt_keyFunc);
+};
+goog.iter.starMap = function(iterable, f, opt_obj) {
+  var iterator = goog.iter.toIterator(iterable);
+  var iter = new goog.iter.Iterator;
+  iter.next = function() {
+    var args = goog.iter.toArray(iterator.next());
+    return f.apply(opt_obj, goog.array.concat(args, undefined, iterator));
+  };
+  return iter;
+};
+goog.iter.tee = function(iterable, opt_num) {
+  var iterator = goog.iter.toIterator(iterable);
+  var num = goog.isNumber(opt_num) ? opt_num : 2;
+  var buffers = goog.array.map(goog.array.range(num), function() {
+    return[];
+  });
+  var addNextIteratorValueToBuffers = function() {
+    var val = iterator.next();
+    goog.array.forEach(buffers, function(buffer) {
+      buffer.push(val);
+    });
+  };
+  var createIterator = function(buffer) {
+    var iter = new goog.iter.Iterator;
+    iter.next = function() {
+      if (goog.array.isEmpty(buffer)) {
+        addNextIteratorValueToBuffers();
+      }
+      goog.asserts.assert(!goog.array.isEmpty(buffer));
+      return buffer.shift();
+    };
+    return iter;
+  };
+  return goog.array.map(buffers, createIterator);
+};
+goog.iter.enumerate = function(iterable, opt_start) {
+  return goog.iter.zip(goog.iter.count(opt_start), iterable);
+};
+goog.iter.limit = function(iterable, limitSize) {
+  goog.asserts.assert(goog.math.isInt(limitSize) && limitSize >= 0);
+  var iterator = goog.iter.toIterator(iterable);
+  var iter = new goog.iter.Iterator;
+  var remaining = limitSize;
+  iter.next = function() {
+    if (remaining-- > 0) {
+      return iterator.next();
+    }
+    throw goog.iter.StopIteration;
+  };
+  return iter;
+};
+goog.iter.consume = function(iterable, count) {
+  goog.asserts.assert(goog.math.isInt(count) && count >= 0);
+  var iterator = goog.iter.toIterator(iterable);
+  while (count-- > 0) {
+    goog.iter.nextOrValue(iterator, null);
+  }
+  return iterator;
+};
+goog.iter.slice = function(iterable, start, opt_end) {
+  goog.asserts.assert(goog.math.isInt(start) && start >= 0);
+  var iterator = goog.iter.consume(iterable, start);
+  if (goog.isNumber(opt_end)) {
+    goog.asserts.assert(goog.math.isInt((opt_end)) && opt_end >= start);
+    iterator = goog.iter.limit(iterator, opt_end - start);
+  }
+  return iterator;
+};
+goog.iter.hasDuplicates_ = function(arr) {
+  var deduped = [];
+  goog.array.removeDuplicates(arr, deduped);
+  return arr.length != deduped.length;
+};
+goog.iter.permutations = function(iterable, opt_length) {
+  var elements = goog.iter.toArray(iterable);
+  var length = goog.isNumber(opt_length) ? opt_length : elements.length;
+  var sets = goog.array.repeat(elements, length);
+  var product = goog.iter.product.apply(undefined, sets);
+  return goog.iter.filter(product, function(arr) {
+    return!goog.iter.hasDuplicates_(arr);
+  });
+};
+goog.iter.combinations = function(iterable, length) {
+  var elements = goog.iter.toArray(iterable);
+  var indexes = goog.iter.range(elements.length);
+  var indexIterator = goog.iter.permutations(indexes, length);
+  var sortedIndexIterator = goog.iter.filter(indexIterator, function(arr) {
+    return goog.array.isSorted(arr);
+  });
+  var iter = new goog.iter.Iterator;
+  function getIndexFromElements(index) {
+    return elements[index];
+  }
+  iter.next = function() {
+    return goog.array.map((sortedIndexIterator.next()), getIndexFromElements);
+  };
+  return iter;
+};
+goog.iter.combinationsWithReplacement = function(iterable, length) {
+  var elements = goog.iter.toArray(iterable);
+  var indexes = goog.array.range(elements.length);
+  var sets = goog.array.repeat(indexes, length);
+  var indexIterator = goog.iter.product.apply(undefined, sets);
+  var sortedIndexIterator = goog.iter.filter(indexIterator, function(arr) {
+    return goog.array.isSorted(arr);
+  });
+  var iter = new goog.iter.Iterator;
+  function getIndexFromElements(index) {
+    return elements[index];
+  }
+  iter.next = function() {
+    return goog.array.map((sortedIndexIterator.next()), getIndexFromElements);
+  };
+  return iter;
+};
+goog.provide("goog.structs.Map");
+goog.require("goog.iter.Iterator");
+goog.require("goog.iter.StopIteration");
+goog.require("goog.object");
+goog.structs.Map = function(opt_map, var_args) {
+  this.map_ = {};
+  this.keys_ = [];
+  this.count_ = 0;
+  this.version_ = 0;
+  var argLength = arguments.length;
+  if (argLength > 1) {
+    if (argLength % 2) {
+      throw Error("Uneven number of arguments");
+    }
+    for (var i = 0;i < argLength;i += 2) {
+      this.set(arguments[i], arguments[i + 1]);
+    }
+  } else {
+    if (opt_map) {
+      this.addAll((opt_map));
+    }
+  }
+};
+goog.structs.Map.prototype.getCount = function() {
+  return this.count_;
+};
+goog.structs.Map.prototype.getValues = function() {
+  this.cleanupKeysArray_();
+  var rv = [];
+  for (var i = 0;i < this.keys_.length;i++) {
+    var key = this.keys_[i];
+    rv.push(this.map_[key]);
+  }
+  return rv;
+};
+goog.structs.Map.prototype.getKeys = function() {
+  this.cleanupKeysArray_();
+  return(this.keys_.concat());
+};
+goog.structs.Map.prototype.containsKey = function(key) {
+  return goog.structs.Map.hasKey_(this.map_, key);
+};
+goog.structs.Map.prototype.containsValue = function(val) {
+  for (var i = 0;i < this.keys_.length;i++) {
+    var key = this.keys_[i];
+    if (goog.structs.Map.hasKey_(this.map_, key) && this.map_[key] == val) {
+      return true;
+    }
+  }
+  return false;
+};
+goog.structs.Map.prototype.equals = function(otherMap, opt_equalityFn) {
+  if (this === otherMap) {
+    return true;
+  }
+  if (this.count_ != otherMap.getCount()) {
+    return false;
+  }
+  var equalityFn = opt_equalityFn || goog.structs.Map.defaultEquals;
+  this.cleanupKeysArray_();
+  for (var key, i = 0;key = this.keys_[i];i++) {
+    if (!equalityFn(this.get(key), otherMap.get(key))) {
+      return false;
+    }
+  }
+  return true;
+};
+goog.structs.Map.defaultEquals = function(a, b) {
+  return a === b;
+};
+goog.structs.Map.prototype.isEmpty = function() {
+  return this.count_ == 0;
+};
+goog.structs.Map.prototype.clear = function() {
+  this.map_ = {};
+  this.keys_.length = 0;
+  this.count_ = 0;
+  this.version_ = 0;
+};
+goog.structs.Map.prototype.remove = function(key) {
+  if (goog.structs.Map.hasKey_(this.map_, key)) {
+    delete this.map_[key];
+    this.count_--;
+    this.version_++;
+    if (this.keys_.length > 2 * this.count_) {
+      this.cleanupKeysArray_();
+    }
+    return true;
+  }
+  return false;
+};
+goog.structs.Map.prototype.cleanupKeysArray_ = function() {
+  if (this.count_ != this.keys_.length) {
+    var srcIndex = 0;
+    var destIndex = 0;
+    while (srcIndex < this.keys_.length) {
+      var key = this.keys_[srcIndex];
+      if (goog.structs.Map.hasKey_(this.map_, key)) {
+        this.keys_[destIndex++] = key;
+      }
+      srcIndex++;
+    }
+    this.keys_.length = destIndex;
+  }
+  if (this.count_ != this.keys_.length) {
+    var seen = {};
+    var srcIndex = 0;
+    var destIndex = 0;
+    while (srcIndex < this.keys_.length) {
+      var key = this.keys_[srcIndex];
+      if (!goog.structs.Map.hasKey_(seen, key)) {
+        this.keys_[destIndex++] = key;
+        seen[key] = 1;
+      }
+      srcIndex++;
+    }
+    this.keys_.length = destIndex;
+  }
+};
+goog.structs.Map.prototype.get = function(key, opt_val) {
+  if (goog.structs.Map.hasKey_(this.map_, key)) {
+    return this.map_[key];
+  }
+  return opt_val;
+};
+goog.structs.Map.prototype.set = function(key, value) {
+  if (!goog.structs.Map.hasKey_(this.map_, key)) {
+    this.count_++;
+    this.keys_.push(key);
+    this.version_++;
+  }
+  this.map_[key] = value;
+};
+goog.structs.Map.prototype.addAll = function(map) {
+  var keys, values;
+  if (map instanceof goog.structs.Map) {
+    keys = map.getKeys();
+    values = map.getValues();
+  } else {
+    keys = goog.object.getKeys(map);
+    values = goog.object.getValues(map);
+  }
+  for (var i = 0;i < keys.length;i++) {
+    this.set(keys[i], values[i]);
+  }
+};
+goog.structs.Map.prototype.forEach = function(f, opt_obj) {
+  var keys = this.getKeys();
+  for (var i = 0;i < keys.length;i++) {
+    var key = keys[i];
+    var value = this.get(key);
+    f.call(opt_obj, value, key, this);
+  }
+};
+goog.structs.Map.prototype.clone = function() {
+  return new goog.structs.Map(this);
+};
+goog.structs.Map.prototype.transpose = function() {
+  var transposed = new goog.structs.Map;
+  for (var i = 0;i < this.keys_.length;i++) {
+    var key = this.keys_[i];
+    var value = this.map_[key];
+    transposed.set(value, key);
+  }
+  return transposed;
+};
+goog.structs.Map.prototype.toObject = function() {
+  this.cleanupKeysArray_();
+  var obj = {};
+  for (var i = 0;i < this.keys_.length;i++) {
+    var key = this.keys_[i];
+    obj[key] = this.map_[key];
+  }
+  return obj;
+};
+goog.structs.Map.prototype.getKeyIterator = function() {
+  return this.__iterator__(true);
+};
+goog.structs.Map.prototype.getValueIterator = function() {
+  return this.__iterator__(false);
+};
+goog.structs.Map.prototype.__iterator__ = function(opt_keys) {
+  this.cleanupKeysArray_();
+  var i = 0;
+  var keys = this.keys_;
+  var map = this.map_;
+  var version = this.version_;
+  var selfObj = this;
+  var newIter = new goog.iter.Iterator;
+  newIter.next = function() {
+    while (true) {
+      if (version != selfObj.version_) {
+        throw Error("The map has changed since the iterator was created");
+      }
+      if (i >= keys.length) {
+        throw goog.iter.StopIteration;
+      }
+      var key = keys[i++];
+      return opt_keys ? key : map[key];
+    }
+  };
+  return newIter;
+};
+goog.structs.Map.hasKey_ = function(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+};
+goog.provide("goog.dom.forms");
+goog.require("goog.structs.Map");
+goog.dom.forms.getFormDataMap = function(form) {
+  var map = new goog.structs.Map;
+  goog.dom.forms.getFormDataHelper_(form, map, goog.dom.forms.addFormDataToMap_);
+  return map;
+};
+goog.dom.forms.getFormDataString = function(form) {
+  var sb = [];
+  goog.dom.forms.getFormDataHelper_(form, sb, goog.dom.forms.addFormDataToStringBuffer_);
+  return sb.join("\x26");
+};
+goog.dom.forms.getFormDataHelper_ = function(form, result, fnAppend) {
+  var els = form.elements;
+  for (var el, i = 0;el = els[i];i++) {
+    if (el.form != form || el.disabled || el.tagName.toLowerCase() == "fieldset") {
+      continue;
+    }
+    var name = el.name;
+    switch(el.type.toLowerCase()) {
+      case "file":
+      ;
+      case "submit":
+      ;
+      case "reset":
+      ;
+      case "button":
+        break;
+      case "select-multiple":
+        var values = goog.dom.forms.getValue(el);
+        if (values != null) {
+          for (var value, j = 0;value = values[j];j++) {
+            fnAppend(result, name, value);
+          }
+        }
+        break;
+      default:
+        var value = goog.dom.forms.getValue(el);
+        if (value != null) {
+          fnAppend(result, name, value);
+        }
+      ;
+    }
+  }
+  var inputs = form.getElementsByTagName("input");
+  for (var input, i = 0;input = inputs[i];i++) {
+    if (input.form == form && input.type.toLowerCase() == "image") {
+      name = input.name;
+      fnAppend(result, name, input.value);
+      fnAppend(result, name + ".x", "0");
+      fnAppend(result, name + ".y", "0");
+    }
+  }
+};
+goog.dom.forms.addFormDataToMap_ = function(map, name, value) {
+  var array = map.get(name);
+  if (!array) {
+    array = [];
+    map.set(name, array);
+  }
+  array.push(value);
+};
+goog.dom.forms.addFormDataToStringBuffer_ = function(sb, name, value) {
+  sb.push(encodeURIComponent(name) + "\x3d" + encodeURIComponent(value));
+};
+goog.dom.forms.hasFileInput = function(form) {
+  var els = form.elements;
+  for (var el, i = 0;el = els[i];i++) {
+    if (!el.disabled && el.type && el.type.toLowerCase() == "file") {
+      return true;
+    }
+  }
+  return false;
+};
+goog.dom.forms.setDisabled = function(el, disabled) {
+  if (el.tagName == "FORM") {
+    var els = el.elements;
+    for (var i = 0;el = els[i];i++) {
+      goog.dom.forms.setDisabled(el, disabled);
+    }
+  } else {
+    if (disabled == true) {
+      el.blur();
+    }
+    el.disabled = disabled;
+  }
+};
+goog.dom.forms.focusAndSelect = function(el) {
+  el.focus();
+  if (el.select) {
+    el.select();
+  }
+};
+goog.dom.forms.hasValue = function(el) {
+  var value = goog.dom.forms.getValue(el);
+  return!!value;
+};
+goog.dom.forms.hasValueByName = function(form, name) {
+  var value = goog.dom.forms.getValueByName(form, name);
+  return!!value;
+};
+goog.dom.forms.getValue = function(el) {
+  var type = el.type;
+  if (!goog.isDef(type)) {
+    return null;
+  }
+  switch(type.toLowerCase()) {
+    case "checkbox":
+    ;
+    case "radio":
+      return goog.dom.forms.getInputChecked_(el);
+    case "select-one":
+      return goog.dom.forms.getSelectSingle_(el);
+    case "select-multiple":
+      return goog.dom.forms.getSelectMultiple_(el);
+    default:
+      return goog.isDef(el.value) ? el.value : null;
+  }
+};
+goog.dom.$F = goog.dom.forms.getValue;
+goog.dom.forms.getValueByName = function(form, name) {
+  var els = form.elements[name];
+  if (els) {
+    if (els.type) {
+      return goog.dom.forms.getValue(els);
+    } else {
+      for (var i = 0;i < els.length;i++) {
+        var val = goog.dom.forms.getValue(els[i]);
+        if (val) {
+          return val;
+        }
+      }
+    }
+  }
+  return null;
+};
+goog.dom.forms.getInputChecked_ = function(el) {
+  return el.checked ? el.value : null;
+};
+goog.dom.forms.getSelectSingle_ = function(el) {
+  var selectedIndex = el.selectedIndex;
+  return selectedIndex >= 0 ? el.options[selectedIndex].value : null;
+};
+goog.dom.forms.getSelectMultiple_ = function(el) {
+  var values = [];
+  for (var option, i = 0;option = el.options[i];i++) {
+    if (option.selected) {
+      values.push(option.value);
+    }
+  }
+  return values.length ? values : null;
+};
+goog.dom.forms.setValue = function(el, opt_value) {
+  var type = el.type;
+  if (goog.isDef(type)) {
+    switch(type.toLowerCase()) {
+      case "checkbox":
+      ;
+      case "radio":
+        goog.dom.forms.setInputChecked_(el, (opt_value));
+        break;
+      case "select-one":
+        goog.dom.forms.setSelectSingle_(el, (opt_value));
+        break;
+      case "select-multiple":
+        goog.dom.forms.setSelectMultiple_(el, (opt_value));
+        break;
+      default:
+        el.value = goog.isDefAndNotNull(opt_value) ? opt_value : "";
+    }
+  }
+};
+goog.dom.forms.setInputChecked_ = function(el, opt_value) {
+  el.checked = opt_value ? "checked" : null;
+};
+goog.dom.forms.setSelectSingle_ = function(el, opt_value) {
+  el.selectedIndex = -1;
+  if (goog.isString(opt_value)) {
+    for (var option, i = 0;option = el.options[i];i++) {
+      if (option.value == opt_value) {
+        option.selected = true;
+        break;
+      }
+    }
+  }
+};
+goog.dom.forms.setSelectMultiple_ = function(el, opt_value) {
+  if (goog.isString(opt_value)) {
+    opt_value = [opt_value];
+  }
+  for (var option, i = 0;option = el.options[i];i++) {
+    option.selected = false;
+    if (opt_value) {
+      for (var value, j = 0;value = opt_value[j];j++) {
+        if (option.value == value) {
+          option.selected = true;
+        }
+      }
+    }
+  }
+};
+goog.provide("goog.dom.TagName");
+goog.dom.TagName = {A:"A", ABBR:"ABBR", ACRONYM:"ACRONYM", ADDRESS:"ADDRESS", APPLET:"APPLET", AREA:"AREA", ARTICLE:"ARTICLE", ASIDE:"ASIDE", AUDIO:"AUDIO", B:"B", BASE:"BASE", BASEFONT:"BASEFONT", BDI:"BDI", BDO:"BDO", BIG:"BIG", BLOCKQUOTE:"BLOCKQUOTE", BODY:"BODY", BR:"BR", BUTTON:"BUTTON", CANVAS:"CANVAS", CAPTION:"CAPTION", CENTER:"CENTER", CITE:"CITE", CODE:"CODE", COL:"COL", COLGROUP:"COLGROUP", COMMAND:"COMMAND", DATA:"DATA", DATALIST:"DATALIST", DD:"DD", DEL:"DEL", DETAILS:"DETAILS", DFN:"DFN", 
+DIALOG:"DIALOG", DIR:"DIR", DIV:"DIV", DL:"DL", DT:"DT", EM:"EM", EMBED:"EMBED", FIELDSET:"FIELDSET", FIGCAPTION:"FIGCAPTION", FIGURE:"FIGURE", FONT:"FONT", FOOTER:"FOOTER", FORM:"FORM", FRAME:"FRAME", FRAMESET:"FRAMESET", H1:"H1", H2:"H2", H3:"H3", H4:"H4", H5:"H5", H6:"H6", HEAD:"HEAD", HEADER:"HEADER", HGROUP:"HGROUP", HR:"HR", HTML:"HTML", I:"I", IFRAME:"IFRAME", IMG:"IMG", INPUT:"INPUT", INS:"INS", ISINDEX:"ISINDEX", KBD:"KBD", KEYGEN:"KEYGEN", LABEL:"LABEL", LEGEND:"LEGEND", LI:"LI", LINK:"LINK", 
+MAP:"MAP", MARK:"MARK", MATH:"MATH", MENU:"MENU", META:"META", METER:"METER", NAV:"NAV", NOFRAMES:"NOFRAMES", NOSCRIPT:"NOSCRIPT", OBJECT:"OBJECT", OL:"OL", OPTGROUP:"OPTGROUP", OPTION:"OPTION", OUTPUT:"OUTPUT", P:"P", PARAM:"PARAM", PRE:"PRE", PROGRESS:"PROGRESS", Q:"Q", RP:"RP", RT:"RT", RUBY:"RUBY", S:"S", SAMP:"SAMP", SCRIPT:"SCRIPT", SECTION:"SECTION", SELECT:"SELECT", SMALL:"SMALL", SOURCE:"SOURCE", SPAN:"SPAN", STRIKE:"STRIKE", STRONG:"STRONG", STYLE:"STYLE", SUB:"SUB", SUMMARY:"SUMMARY", 
+SUP:"SUP", SVG:"SVG", TABLE:"TABLE", TBODY:"TBODY", TD:"TD", TEXTAREA:"TEXTAREA", TFOOT:"TFOOT", TH:"TH", THEAD:"THEAD", TIME:"TIME", TITLE:"TITLE", TR:"TR", TRACK:"TRACK", TT:"TT", U:"U", UL:"UL", VAR:"VAR", VIDEO:"VIDEO", WBR:"WBR"};
 goog.provide("goog.math.Coordinate");
 goog.require("goog.math");
 goog.math.Coordinate = function(opt_x, opt_y) {
@@ -35626,6 +36562,155 @@ goog.dom.DomHelper.prototype.isNodeList = goog.dom.isNodeList;
 goog.dom.DomHelper.prototype.getAncestorByTagNameAndClass = goog.dom.getAncestorByTagNameAndClass;
 goog.dom.DomHelper.prototype.getAncestorByClass = goog.dom.getAncestorByClass;
 goog.dom.DomHelper.prototype.getAncestor = goog.dom.getAncestor;
+goog.provide("goog.dom.classes");
+goog.require("goog.array");
+goog.dom.classes.set = function(element, className) {
+  element.className = className;
+};
+goog.dom.classes.get = function(element) {
+  var className = element.className;
+  return goog.isString(className) && className.match(/\S+/g) || [];
+};
+goog.dom.classes.add = function(element, var_args) {
+  var classes = goog.dom.classes.get(element);
+  var args = goog.array.slice(arguments, 1);
+  var expectedCount = classes.length + args.length;
+  goog.dom.classes.add_(classes, args);
+  goog.dom.classes.set(element, classes.join(" "));
+  return classes.length == expectedCount;
+};
+goog.dom.classes.remove = function(element, var_args) {
+  var classes = goog.dom.classes.get(element);
+  var args = goog.array.slice(arguments, 1);
+  var newClasses = goog.dom.classes.getDifference_(classes, args);
+  goog.dom.classes.set(element, newClasses.join(" "));
+  return newClasses.length == classes.length - args.length;
+};
+goog.dom.classes.add_ = function(classes, args) {
+  for (var i = 0;i < args.length;i++) {
+    if (!goog.array.contains(classes, args[i])) {
+      classes.push(args[i]);
+    }
+  }
+};
+goog.dom.classes.getDifference_ = function(arr1, arr2) {
+  return goog.array.filter(arr1, function(item) {
+    return!goog.array.contains(arr2, item);
+  });
+};
+goog.dom.classes.swap = function(element, fromClass, toClass) {
+  var classes = goog.dom.classes.get(element);
+  var removed = false;
+  for (var i = 0;i < classes.length;i++) {
+    if (classes[i] == fromClass) {
+      goog.array.splice(classes, i--, 1);
+      removed = true;
+    }
+  }
+  if (removed) {
+    classes.push(toClass);
+    goog.dom.classes.set(element, classes.join(" "));
+  }
+  return removed;
+};
+goog.dom.classes.addRemove = function(element, classesToRemove, classesToAdd) {
+  var classes = goog.dom.classes.get(element);
+  if (goog.isString(classesToRemove)) {
+    goog.array.remove(classes, classesToRemove);
+  } else {
+    if (goog.isArray(classesToRemove)) {
+      classes = goog.dom.classes.getDifference_(classes, classesToRemove);
+    }
+  }
+  if (goog.isString(classesToAdd) && !goog.array.contains(classes, classesToAdd)) {
+    classes.push(classesToAdd);
+  } else {
+    if (goog.isArray(classesToAdd)) {
+      goog.dom.classes.add_(classes, classesToAdd);
+    }
+  }
+  goog.dom.classes.set(element, classes.join(" "));
+};
+goog.dom.classes.has = function(element, className) {
+  return goog.array.contains(goog.dom.classes.get(element), className);
+};
+goog.dom.classes.enable = function(element, className, enabled) {
+  if (enabled) {
+    goog.dom.classes.add(element, className);
+  } else {
+    goog.dom.classes.remove(element, className);
+  }
+};
+goog.dom.classes.toggle = function(element, className) {
+  var add = !goog.dom.classes.has(element, className);
+  goog.dom.classes.enable(element, className, add);
+  return add;
+};
+goog.provide("domina.support");
+goog.require("cljs.core");
+goog.require("goog.events");
+goog.require("goog.dom");
+var div_17163 = document.createElement("div");
+var test_html_17164 = "   \x3clink/\x3e\x3ctable\x3e\x3c/table\x3e\x3ca href\x3d'/a' style\x3d'top:1px;float:left;opacity:.55;'\x3ea\x3c/a\x3e\x3cinput type\x3d'checkbox'/\x3e";
+div_17163.innerHTML = test_html_17164;
+domina.support.leading_whitespace_QMARK_ = cljs.core._EQ_.call(null, div_17163.firstChild.nodeType, 3);
+domina.support.extraneous_tbody_QMARK_ = cljs.core._EQ_.call(null, div_17163.getElementsByTagName("tbody").length, 0);
+domina.support.unscoped_html_elements_QMARK_ = cljs.core._EQ_.call(null, div_17163.getElementsByTagName("link").length, 0);
+goog.provide("goog.dom.vendor");
+goog.require("goog.string");
+goog.require("goog.userAgent");
+goog.dom.vendor.getVendorJsPrefix = function() {
+  if (goog.userAgent.WEBKIT) {
+    return "Webkit";
+  } else {
+    if (goog.userAgent.GECKO) {
+      return "Moz";
+    } else {
+      if (goog.userAgent.IE) {
+        return "ms";
+      } else {
+        if (goog.userAgent.OPERA) {
+          return "O";
+        }
+      }
+    }
+  }
+  return null;
+};
+goog.dom.vendor.getVendorPrefix = function() {
+  if (goog.userAgent.WEBKIT) {
+    return "-webkit";
+  } else {
+    if (goog.userAgent.GECKO) {
+      return "-moz";
+    } else {
+      if (goog.userAgent.IE) {
+        return "-ms";
+      } else {
+        if (goog.userAgent.OPERA) {
+          return "-o";
+        }
+      }
+    }
+  }
+  return null;
+};
+goog.dom.vendor.getPrefixedPropertyName = function(propertyName, opt_object) {
+  if (opt_object && propertyName in opt_object) {
+    return propertyName;
+  }
+  var prefix = goog.dom.vendor.getVendorJsPrefix();
+  if (prefix) {
+    prefix = prefix.toLowerCase();
+    var prefixedPropertyName = prefix + goog.string.toTitleCase(propertyName);
+    return!goog.isDef(opt_object) || prefixedPropertyName in opt_object ? prefixedPropertyName : null;
+  }
+  return null;
+};
+goog.dom.vendor.getPrefixedEventType = function(eventType) {
+  var prefix = goog.dom.vendor.getVendorJsPrefix() || "";
+  return(prefix + eventType).toLowerCase();
+};
 goog.provide("goog.math.Box");
 goog.require("goog.math.Coordinate");
 goog.math.Box = function(top, right, bottom, left) {
@@ -35961,1409 +37046,6 @@ goog.math.Rect.prototype.scale = function(sx, opt_sy) {
   this.height *= sy;
   return this;
 };
-goog.provide("goog.iter");
-goog.provide("goog.iter.Iterable");
-goog.provide("goog.iter.Iterator");
-goog.provide("goog.iter.StopIteration");
-goog.require("goog.array");
-goog.require("goog.asserts");
-goog.require("goog.functions");
-goog.require("goog.math");
-goog.iter.Iterable;
-if ("StopIteration" in goog.global) {
-  goog.iter.StopIteration = goog.global["StopIteration"];
-} else {
-  goog.iter.StopIteration = Error("StopIteration");
-}
-goog.iter.Iterator = function() {
-};
-goog.iter.Iterator.prototype.next = function() {
-  throw goog.iter.StopIteration;
-};
-goog.iter.Iterator.prototype.__iterator__ = function(opt_keys) {
-  return this;
-};
-goog.iter.toIterator = function(iterable) {
-  if (iterable instanceof goog.iter.Iterator) {
-    return iterable;
-  }
-  if (typeof iterable.__iterator__ == "function") {
-    return iterable.__iterator__(false);
-  }
-  if (goog.isArrayLike(iterable)) {
-    var i = 0;
-    var newIter = new goog.iter.Iterator;
-    newIter.next = function() {
-      while (true) {
-        if (i >= iterable.length) {
-          throw goog.iter.StopIteration;
-        }
-        if (!(i in iterable)) {
-          i++;
-          continue;
-        }
-        return iterable[i++];
-      }
-    };
-    return newIter;
-  }
-  throw Error("Not implemented");
-};
-goog.iter.forEach = function(iterable, f, opt_obj) {
-  if (goog.isArrayLike(iterable)) {
-    try {
-      goog.array.forEach((iterable), f, opt_obj);
-    } catch (ex) {
-      if (ex !== goog.iter.StopIteration) {
-        throw ex;
-      }
-    }
-  } else {
-    iterable = goog.iter.toIterator(iterable);
-    try {
-      while (true) {
-        f.call(opt_obj, iterable.next(), undefined, iterable);
-      }
-    } catch (ex) {
-      if (ex !== goog.iter.StopIteration) {
-        throw ex;
-      }
-    }
-  }
-};
-goog.iter.filter = function(iterable, f, opt_obj) {
-  var iterator = goog.iter.toIterator(iterable);
-  var newIter = new goog.iter.Iterator;
-  newIter.next = function() {
-    while (true) {
-      var val = iterator.next();
-      if (f.call(opt_obj, val, undefined, iterator)) {
-        return val;
-      }
-    }
-  };
-  return newIter;
-};
-goog.iter.filterFalse = function(iterable, f, opt_obj) {
-  return goog.iter.filter(iterable, goog.functions.not(f), opt_obj);
-};
-goog.iter.range = function(startOrStop, opt_stop, opt_step) {
-  var start = 0;
-  var stop = startOrStop;
-  var step = opt_step || 1;
-  if (arguments.length > 1) {
-    start = startOrStop;
-    stop = opt_stop;
-  }
-  if (step == 0) {
-    throw Error("Range step argument must not be zero");
-  }
-  var newIter = new goog.iter.Iterator;
-  newIter.next = function() {
-    if (step > 0 && start >= stop || step < 0 && start <= stop) {
-      throw goog.iter.StopIteration;
-    }
-    var rv = start;
-    start += step;
-    return rv;
-  };
-  return newIter;
-};
-goog.iter.join = function(iterable, deliminator) {
-  return goog.iter.toArray(iterable).join(deliminator);
-};
-goog.iter.map = function(iterable, f, opt_obj) {
-  var iterator = goog.iter.toIterator(iterable);
-  var newIter = new goog.iter.Iterator;
-  newIter.next = function() {
-    var val = iterator.next();
-    return f.call(opt_obj, val, undefined, iterator);
-  };
-  return newIter;
-};
-goog.iter.reduce = function(iterable, f, val, opt_obj) {
-  var rval = val;
-  goog.iter.forEach(iterable, function(val) {
-    rval = f.call(opt_obj, rval, val);
-  });
-  return rval;
-};
-goog.iter.some = function(iterable, f, opt_obj) {
-  iterable = goog.iter.toIterator(iterable);
-  try {
-    while (true) {
-      if (f.call(opt_obj, iterable.next(), undefined, iterable)) {
-        return true;
-      }
-    }
-  } catch (ex) {
-    if (ex !== goog.iter.StopIteration) {
-      throw ex;
-    }
-  }
-  return false;
-};
-goog.iter.every = function(iterable, f, opt_obj) {
-  iterable = goog.iter.toIterator(iterable);
-  try {
-    while (true) {
-      if (!f.call(opt_obj, iterable.next(), undefined, iterable)) {
-        return false;
-      }
-    }
-  } catch (ex) {
-    if (ex !== goog.iter.StopIteration) {
-      throw ex;
-    }
-  }
-  return true;
-};
-goog.iter.chain = function(var_args) {
-  var iterator = goog.iter.toIterator(arguments);
-  var iter = new goog.iter.Iterator;
-  var current = null;
-  iter.next = function() {
-    while (true) {
-      if (current == null) {
-        var it = iterator.next();
-        current = goog.iter.toIterator(it);
-      }
-      try {
-        return current.next();
-      } catch (ex) {
-        if (ex !== goog.iter.StopIteration) {
-          throw ex;
-        }
-        current = null;
-      }
-    }
-  };
-  return iter;
-};
-goog.iter.chainFromIterable = function(iterable) {
-  return goog.iter.chain.apply(undefined, iterable);
-};
-goog.iter.dropWhile = function(iterable, f, opt_obj) {
-  var iterator = goog.iter.toIterator(iterable);
-  var newIter = new goog.iter.Iterator;
-  var dropping = true;
-  newIter.next = function() {
-    while (true) {
-      var val = iterator.next();
-      if (dropping && f.call(opt_obj, val, undefined, iterator)) {
-        continue;
-      } else {
-        dropping = false;
-      }
-      return val;
-    }
-  };
-  return newIter;
-};
-goog.iter.takeWhile = function(iterable, f, opt_obj) {
-  var iterator = goog.iter.toIterator(iterable);
-  var newIter = new goog.iter.Iterator;
-  var taking = true;
-  newIter.next = function() {
-    while (true) {
-      if (taking) {
-        var val = iterator.next();
-        if (f.call(opt_obj, val, undefined, iterator)) {
-          return val;
-        } else {
-          taking = false;
-        }
-      } else {
-        throw goog.iter.StopIteration;
-      }
-    }
-  };
-  return newIter;
-};
-goog.iter.toArray = function(iterable) {
-  if (goog.isArrayLike(iterable)) {
-    return goog.array.toArray((iterable));
-  }
-  iterable = goog.iter.toIterator(iterable);
-  var array = [];
-  goog.iter.forEach(iterable, function(val) {
-    array.push(val);
-  });
-  return array;
-};
-goog.iter.equals = function(iterable1, iterable2) {
-  var fillValue = {};
-  var pairs = goog.iter.zipLongest(fillValue, iterable1, iterable2);
-  return goog.iter.every(pairs, function(pair) {
-    return pair[0] == pair[1];
-  });
-};
-goog.iter.nextOrValue = function(iterable, defaultValue) {
-  try {
-    return goog.iter.toIterator(iterable).next();
-  } catch (e) {
-    if (e != goog.iter.StopIteration) {
-      throw e;
-    }
-    return defaultValue;
-  }
-};
-goog.iter.product = function(var_args) {
-  var someArrayEmpty = goog.array.some(arguments, function(arr) {
-    return!arr.length;
-  });
-  if (someArrayEmpty || !arguments.length) {
-    return new goog.iter.Iterator;
-  }
-  var iter = new goog.iter.Iterator;
-  var arrays = arguments;
-  var indicies = goog.array.repeat(0, arrays.length);
-  iter.next = function() {
-    if (indicies) {
-      var retVal = goog.array.map(indicies, function(valueIndex, arrayIndex) {
-        return arrays[arrayIndex][valueIndex];
-      });
-      for (var i = indicies.length - 1;i >= 0;i--) {
-        goog.asserts.assert(indicies);
-        if (indicies[i] < arrays[i].length - 1) {
-          indicies[i]++;
-          break;
-        }
-        if (i == 0) {
-          indicies = null;
-          break;
-        }
-        indicies[i] = 0;
-      }
-      return retVal;
-    }
-    throw goog.iter.StopIteration;
-  };
-  return iter;
-};
-goog.iter.cycle = function(iterable) {
-  var baseIterator = goog.iter.toIterator(iterable);
-  var cache = [];
-  var cacheIndex = 0;
-  var iter = new goog.iter.Iterator;
-  var useCache = false;
-  iter.next = function() {
-    var returnElement = null;
-    if (!useCache) {
-      try {
-        returnElement = baseIterator.next();
-        cache.push(returnElement);
-        return returnElement;
-      } catch (e) {
-        if (e != goog.iter.StopIteration || goog.array.isEmpty(cache)) {
-          throw e;
-        }
-        useCache = true;
-      }
-    }
-    returnElement = cache[cacheIndex];
-    cacheIndex = (cacheIndex + 1) % cache.length;
-    return returnElement;
-  };
-  return iter;
-};
-goog.iter.count = function(opt_start, opt_step) {
-  var counter = opt_start || 0;
-  var step = goog.isDef(opt_step) ? opt_step : 1;
-  var iter = new goog.iter.Iterator;
-  iter.next = function() {
-    var returnValue = counter;
-    counter += step;
-    return returnValue;
-  };
-  return iter;
-};
-goog.iter.repeat = function(value) {
-  var iter = new goog.iter.Iterator;
-  iter.next = goog.functions.constant(value);
-  return iter;
-};
-goog.iter.accumulate = function(iterable) {
-  var iterator = goog.iter.toIterator(iterable);
-  var total = 0;
-  var iter = new goog.iter.Iterator;
-  iter.next = function() {
-    total += iterator.next();
-    return total;
-  };
-  return iter;
-};
-goog.iter.zip = function(var_args) {
-  var args = arguments;
-  var iter = new goog.iter.Iterator;
-  if (args.length > 0) {
-    var iterators = goog.array.map(args, goog.iter.toIterator);
-    iter.next = function() {
-      var arr = goog.array.map(iterators, function(it) {
-        return it.next();
-      });
-      return arr;
-    };
-  }
-  return iter;
-};
-goog.iter.zipLongest = function(fillValue, var_args) {
-  var args = goog.array.slice(arguments, 1);
-  var iter = new goog.iter.Iterator;
-  if (args.length > 0) {
-    var iterators = goog.array.map(args, goog.iter.toIterator);
-    iter.next = function() {
-      var iteratorsHaveValues = false;
-      var arr = goog.array.map(iterators, function(it) {
-        var returnValue;
-        try {
-          returnValue = it.next();
-          iteratorsHaveValues = true;
-        } catch (ex) {
-          if (ex !== goog.iter.StopIteration) {
-            throw ex;
-          }
-          returnValue = fillValue;
-        }
-        return returnValue;
-      });
-      if (!iteratorsHaveValues) {
-        throw goog.iter.StopIteration;
-      }
-      return arr;
-    };
-  }
-  return iter;
-};
-goog.iter.compress = function(iterable, selectors) {
-  var selectorIterator = goog.iter.toIterator(selectors);
-  return goog.iter.filter(iterable, function() {
-    return!!selectorIterator.next();
-  });
-};
-goog.iter.GroupByIterator_ = function(iterable, opt_keyFunc) {
-  this.iterator = goog.iter.toIterator(iterable);
-  this.keyFunc = opt_keyFunc || goog.functions.identity;
-  this.targetKey;
-  this.currentKey;
-  this.currentValue;
-};
-goog.inherits(goog.iter.GroupByIterator_, goog.iter.Iterator);
-goog.iter.GroupByIterator_.prototype.next = function() {
-  while (this.currentKey == this.targetKey) {
-    this.currentValue = this.iterator.next();
-    this.currentKey = this.keyFunc(this.currentValue);
-  }
-  this.targetKey = this.currentKey;
-  return[this.currentKey, this.groupItems_(this.targetKey)];
-};
-goog.iter.GroupByIterator_.prototype.groupItems_ = function(targetKey) {
-  var arr = [];
-  while (this.currentKey == targetKey) {
-    arr.push(this.currentValue);
-    try {
-      this.currentValue = this.iterator.next();
-    } catch (ex) {
-      if (ex !== goog.iter.StopIteration) {
-        throw ex;
-      }
-      break;
-    }
-    this.currentKey = this.keyFunc(this.currentValue);
-  }
-  return arr;
-};
-goog.iter.groupBy = function(iterable, opt_keyFunc) {
-  return new goog.iter.GroupByIterator_(iterable, opt_keyFunc);
-};
-goog.iter.starMap = function(iterable, f, opt_obj) {
-  var iterator = goog.iter.toIterator(iterable);
-  var iter = new goog.iter.Iterator;
-  iter.next = function() {
-    var args = goog.iter.toArray(iterator.next());
-    return f.apply(opt_obj, goog.array.concat(args, undefined, iterator));
-  };
-  return iter;
-};
-goog.iter.tee = function(iterable, opt_num) {
-  var iterator = goog.iter.toIterator(iterable);
-  var num = goog.isNumber(opt_num) ? opt_num : 2;
-  var buffers = goog.array.map(goog.array.range(num), function() {
-    return[];
-  });
-  var addNextIteratorValueToBuffers = function() {
-    var val = iterator.next();
-    goog.array.forEach(buffers, function(buffer) {
-      buffer.push(val);
-    });
-  };
-  var createIterator = function(buffer) {
-    var iter = new goog.iter.Iterator;
-    iter.next = function() {
-      if (goog.array.isEmpty(buffer)) {
-        addNextIteratorValueToBuffers();
-      }
-      goog.asserts.assert(!goog.array.isEmpty(buffer));
-      return buffer.shift();
-    };
-    return iter;
-  };
-  return goog.array.map(buffers, createIterator);
-};
-goog.iter.enumerate = function(iterable, opt_start) {
-  return goog.iter.zip(goog.iter.count(opt_start), iterable);
-};
-goog.iter.limit = function(iterable, limitSize) {
-  goog.asserts.assert(goog.math.isInt(limitSize) && limitSize >= 0);
-  var iterator = goog.iter.toIterator(iterable);
-  var iter = new goog.iter.Iterator;
-  var remaining = limitSize;
-  iter.next = function() {
-    if (remaining-- > 0) {
-      return iterator.next();
-    }
-    throw goog.iter.StopIteration;
-  };
-  return iter;
-};
-goog.iter.consume = function(iterable, count) {
-  goog.asserts.assert(goog.math.isInt(count) && count >= 0);
-  var iterator = goog.iter.toIterator(iterable);
-  while (count-- > 0) {
-    goog.iter.nextOrValue(iterator, null);
-  }
-  return iterator;
-};
-goog.iter.slice = function(iterable, start, opt_end) {
-  goog.asserts.assert(goog.math.isInt(start) && start >= 0);
-  var iterator = goog.iter.consume(iterable, start);
-  if (goog.isNumber(opt_end)) {
-    goog.asserts.assert(goog.math.isInt((opt_end)) && opt_end >= start);
-    iterator = goog.iter.limit(iterator, opt_end - start);
-  }
-  return iterator;
-};
-goog.iter.hasDuplicates_ = function(arr) {
-  var deduped = [];
-  goog.array.removeDuplicates(arr, deduped);
-  return arr.length != deduped.length;
-};
-goog.iter.permutations = function(iterable, opt_length) {
-  var elements = goog.iter.toArray(iterable);
-  var length = goog.isNumber(opt_length) ? opt_length : elements.length;
-  var sets = goog.array.repeat(elements, length);
-  var product = goog.iter.product.apply(undefined, sets);
-  return goog.iter.filter(product, function(arr) {
-    return!goog.iter.hasDuplicates_(arr);
-  });
-};
-goog.iter.combinations = function(iterable, length) {
-  var elements = goog.iter.toArray(iterable);
-  var indexes = goog.iter.range(elements.length);
-  var indexIterator = goog.iter.permutations(indexes, length);
-  var sortedIndexIterator = goog.iter.filter(indexIterator, function(arr) {
-    return goog.array.isSorted(arr);
-  });
-  var iter = new goog.iter.Iterator;
-  function getIndexFromElements(index) {
-    return elements[index];
-  }
-  iter.next = function() {
-    return goog.array.map((sortedIndexIterator.next()), getIndexFromElements);
-  };
-  return iter;
-};
-goog.iter.combinationsWithReplacement = function(iterable, length) {
-  var elements = goog.iter.toArray(iterable);
-  var indexes = goog.array.range(elements.length);
-  var sets = goog.array.repeat(indexes, length);
-  var indexIterator = goog.iter.product.apply(undefined, sets);
-  var sortedIndexIterator = goog.iter.filter(indexIterator, function(arr) {
-    return goog.array.isSorted(arr);
-  });
-  var iter = new goog.iter.Iterator;
-  function getIndexFromElements(index) {
-    return elements[index];
-  }
-  iter.next = function() {
-    return goog.array.map((sortedIndexIterator.next()), getIndexFromElements);
-  };
-  return iter;
-};
-goog.provide("goog.dom.vendor");
-goog.require("goog.string");
-goog.require("goog.userAgent");
-goog.dom.vendor.getVendorJsPrefix = function() {
-  if (goog.userAgent.WEBKIT) {
-    return "Webkit";
-  } else {
-    if (goog.userAgent.GECKO) {
-      return "Moz";
-    } else {
-      if (goog.userAgent.IE) {
-        return "ms";
-      } else {
-        if (goog.userAgent.OPERA) {
-          return "O";
-        }
-      }
-    }
-  }
-  return null;
-};
-goog.dom.vendor.getVendorPrefix = function() {
-  if (goog.userAgent.WEBKIT) {
-    return "-webkit";
-  } else {
-    if (goog.userAgent.GECKO) {
-      return "-moz";
-    } else {
-      if (goog.userAgent.IE) {
-        return "-ms";
-      } else {
-        if (goog.userAgent.OPERA) {
-          return "-o";
-        }
-      }
-    }
-  }
-  return null;
-};
-goog.dom.vendor.getPrefixedPropertyName = function(propertyName, opt_object) {
-  if (opt_object && propertyName in opt_object) {
-    return propertyName;
-  }
-  var prefix = goog.dom.vendor.getVendorJsPrefix();
-  if (prefix) {
-    prefix = prefix.toLowerCase();
-    var prefixedPropertyName = prefix + goog.string.toTitleCase(propertyName);
-    return!goog.isDef(opt_object) || prefixedPropertyName in opt_object ? prefixedPropertyName : null;
-  }
-  return null;
-};
-goog.dom.vendor.getPrefixedEventType = function(eventType) {
-  var prefix = goog.dom.vendor.getVendorJsPrefix() || "";
-  return(prefix + eventType).toLowerCase();
-};
-goog.provide("goog.structs.Map");
-goog.require("goog.iter.Iterator");
-goog.require("goog.iter.StopIteration");
-goog.require("goog.object");
-goog.structs.Map = function(opt_map, var_args) {
-  this.map_ = {};
-  this.keys_ = [];
-  this.count_ = 0;
-  this.version_ = 0;
-  var argLength = arguments.length;
-  if (argLength > 1) {
-    if (argLength % 2) {
-      throw Error("Uneven number of arguments");
-    }
-    for (var i = 0;i < argLength;i += 2) {
-      this.set(arguments[i], arguments[i + 1]);
-    }
-  } else {
-    if (opt_map) {
-      this.addAll((opt_map));
-    }
-  }
-};
-goog.structs.Map.prototype.getCount = function() {
-  return this.count_;
-};
-goog.structs.Map.prototype.getValues = function() {
-  this.cleanupKeysArray_();
-  var rv = [];
-  for (var i = 0;i < this.keys_.length;i++) {
-    var key = this.keys_[i];
-    rv.push(this.map_[key]);
-  }
-  return rv;
-};
-goog.structs.Map.prototype.getKeys = function() {
-  this.cleanupKeysArray_();
-  return(this.keys_.concat());
-};
-goog.structs.Map.prototype.containsKey = function(key) {
-  return goog.structs.Map.hasKey_(this.map_, key);
-};
-goog.structs.Map.prototype.containsValue = function(val) {
-  for (var i = 0;i < this.keys_.length;i++) {
-    var key = this.keys_[i];
-    if (goog.structs.Map.hasKey_(this.map_, key) && this.map_[key] == val) {
-      return true;
-    }
-  }
-  return false;
-};
-goog.structs.Map.prototype.equals = function(otherMap, opt_equalityFn) {
-  if (this === otherMap) {
-    return true;
-  }
-  if (this.count_ != otherMap.getCount()) {
-    return false;
-  }
-  var equalityFn = opt_equalityFn || goog.structs.Map.defaultEquals;
-  this.cleanupKeysArray_();
-  for (var key, i = 0;key = this.keys_[i];i++) {
-    if (!equalityFn(this.get(key), otherMap.get(key))) {
-      return false;
-    }
-  }
-  return true;
-};
-goog.structs.Map.defaultEquals = function(a, b) {
-  return a === b;
-};
-goog.structs.Map.prototype.isEmpty = function() {
-  return this.count_ == 0;
-};
-goog.structs.Map.prototype.clear = function() {
-  this.map_ = {};
-  this.keys_.length = 0;
-  this.count_ = 0;
-  this.version_ = 0;
-};
-goog.structs.Map.prototype.remove = function(key) {
-  if (goog.structs.Map.hasKey_(this.map_, key)) {
-    delete this.map_[key];
-    this.count_--;
-    this.version_++;
-    if (this.keys_.length > 2 * this.count_) {
-      this.cleanupKeysArray_();
-    }
-    return true;
-  }
-  return false;
-};
-goog.structs.Map.prototype.cleanupKeysArray_ = function() {
-  if (this.count_ != this.keys_.length) {
-    var srcIndex = 0;
-    var destIndex = 0;
-    while (srcIndex < this.keys_.length) {
-      var key = this.keys_[srcIndex];
-      if (goog.structs.Map.hasKey_(this.map_, key)) {
-        this.keys_[destIndex++] = key;
-      }
-      srcIndex++;
-    }
-    this.keys_.length = destIndex;
-  }
-  if (this.count_ != this.keys_.length) {
-    var seen = {};
-    var srcIndex = 0;
-    var destIndex = 0;
-    while (srcIndex < this.keys_.length) {
-      var key = this.keys_[srcIndex];
-      if (!goog.structs.Map.hasKey_(seen, key)) {
-        this.keys_[destIndex++] = key;
-        seen[key] = 1;
-      }
-      srcIndex++;
-    }
-    this.keys_.length = destIndex;
-  }
-};
-goog.structs.Map.prototype.get = function(key, opt_val) {
-  if (goog.structs.Map.hasKey_(this.map_, key)) {
-    return this.map_[key];
-  }
-  return opt_val;
-};
-goog.structs.Map.prototype.set = function(key, value) {
-  if (!goog.structs.Map.hasKey_(this.map_, key)) {
-    this.count_++;
-    this.keys_.push(key);
-    this.version_++;
-  }
-  this.map_[key] = value;
-};
-goog.structs.Map.prototype.addAll = function(map) {
-  var keys, values;
-  if (map instanceof goog.structs.Map) {
-    keys = map.getKeys();
-    values = map.getValues();
-  } else {
-    keys = goog.object.getKeys(map);
-    values = goog.object.getValues(map);
-  }
-  for (var i = 0;i < keys.length;i++) {
-    this.set(keys[i], values[i]);
-  }
-};
-goog.structs.Map.prototype.forEach = function(f, opt_obj) {
-  var keys = this.getKeys();
-  for (var i = 0;i < keys.length;i++) {
-    var key = keys[i];
-    var value = this.get(key);
-    f.call(opt_obj, value, key, this);
-  }
-};
-goog.structs.Map.prototype.clone = function() {
-  return new goog.structs.Map(this);
-};
-goog.structs.Map.prototype.transpose = function() {
-  var transposed = new goog.structs.Map;
-  for (var i = 0;i < this.keys_.length;i++) {
-    var key = this.keys_[i];
-    var value = this.map_[key];
-    transposed.set(value, key);
-  }
-  return transposed;
-};
-goog.structs.Map.prototype.toObject = function() {
-  this.cleanupKeysArray_();
-  var obj = {};
-  for (var i = 0;i < this.keys_.length;i++) {
-    var key = this.keys_[i];
-    obj[key] = this.map_[key];
-  }
-  return obj;
-};
-goog.structs.Map.prototype.getKeyIterator = function() {
-  return this.__iterator__(true);
-};
-goog.structs.Map.prototype.getValueIterator = function() {
-  return this.__iterator__(false);
-};
-goog.structs.Map.prototype.__iterator__ = function(opt_keys) {
-  this.cleanupKeysArray_();
-  var i = 0;
-  var keys = this.keys_;
-  var map = this.map_;
-  var version = this.version_;
-  var selfObj = this;
-  var newIter = new goog.iter.Iterator;
-  newIter.next = function() {
-    while (true) {
-      if (version != selfObj.version_) {
-        throw Error("The map has changed since the iterator was created");
-      }
-      if (i >= keys.length) {
-        throw goog.iter.StopIteration;
-      }
-      var key = keys[i++];
-      return opt_keys ? key : map[key];
-    }
-  };
-  return newIter;
-};
-goog.structs.Map.hasKey_ = function(obj, key) {
-  return Object.prototype.hasOwnProperty.call(obj, key);
-};
-goog.provide("goog.dom.forms");
-goog.require("goog.structs.Map");
-goog.dom.forms.getFormDataMap = function(form) {
-  var map = new goog.structs.Map;
-  goog.dom.forms.getFormDataHelper_(form, map, goog.dom.forms.addFormDataToMap_);
-  return map;
-};
-goog.dom.forms.getFormDataString = function(form) {
-  var sb = [];
-  goog.dom.forms.getFormDataHelper_(form, sb, goog.dom.forms.addFormDataToStringBuffer_);
-  return sb.join("\x26");
-};
-goog.dom.forms.getFormDataHelper_ = function(form, result, fnAppend) {
-  var els = form.elements;
-  for (var el, i = 0;el = els[i];i++) {
-    if (el.form != form || el.disabled || el.tagName.toLowerCase() == "fieldset") {
-      continue;
-    }
-    var name = el.name;
-    switch(el.type.toLowerCase()) {
-      case "file":
-      ;
-      case "submit":
-      ;
-      case "reset":
-      ;
-      case "button":
-        break;
-      case "select-multiple":
-        var values = goog.dom.forms.getValue(el);
-        if (values != null) {
-          for (var value, j = 0;value = values[j];j++) {
-            fnAppend(result, name, value);
-          }
-        }
-        break;
-      default:
-        var value = goog.dom.forms.getValue(el);
-        if (value != null) {
-          fnAppend(result, name, value);
-        }
-      ;
-    }
-  }
-  var inputs = form.getElementsByTagName("input");
-  for (var input, i = 0;input = inputs[i];i++) {
-    if (input.form == form && input.type.toLowerCase() == "image") {
-      name = input.name;
-      fnAppend(result, name, input.value);
-      fnAppend(result, name + ".x", "0");
-      fnAppend(result, name + ".y", "0");
-    }
-  }
-};
-goog.dom.forms.addFormDataToMap_ = function(map, name, value) {
-  var array = map.get(name);
-  if (!array) {
-    array = [];
-    map.set(name, array);
-  }
-  array.push(value);
-};
-goog.dom.forms.addFormDataToStringBuffer_ = function(sb, name, value) {
-  sb.push(encodeURIComponent(name) + "\x3d" + encodeURIComponent(value));
-};
-goog.dom.forms.hasFileInput = function(form) {
-  var els = form.elements;
-  for (var el, i = 0;el = els[i];i++) {
-    if (!el.disabled && el.type && el.type.toLowerCase() == "file") {
-      return true;
-    }
-  }
-  return false;
-};
-goog.dom.forms.setDisabled = function(el, disabled) {
-  if (el.tagName == "FORM") {
-    var els = el.elements;
-    for (var i = 0;el = els[i];i++) {
-      goog.dom.forms.setDisabled(el, disabled);
-    }
-  } else {
-    if (disabled == true) {
-      el.blur();
-    }
-    el.disabled = disabled;
-  }
-};
-goog.dom.forms.focusAndSelect = function(el) {
-  el.focus();
-  if (el.select) {
-    el.select();
-  }
-};
-goog.dom.forms.hasValue = function(el) {
-  var value = goog.dom.forms.getValue(el);
-  return!!value;
-};
-goog.dom.forms.hasValueByName = function(form, name) {
-  var value = goog.dom.forms.getValueByName(form, name);
-  return!!value;
-};
-goog.dom.forms.getValue = function(el) {
-  var type = el.type;
-  if (!goog.isDef(type)) {
-    return null;
-  }
-  switch(type.toLowerCase()) {
-    case "checkbox":
-    ;
-    case "radio":
-      return goog.dom.forms.getInputChecked_(el);
-    case "select-one":
-      return goog.dom.forms.getSelectSingle_(el);
-    case "select-multiple":
-      return goog.dom.forms.getSelectMultiple_(el);
-    default:
-      return goog.isDef(el.value) ? el.value : null;
-  }
-};
-goog.dom.$F = goog.dom.forms.getValue;
-goog.dom.forms.getValueByName = function(form, name) {
-  var els = form.elements[name];
-  if (els) {
-    if (els.type) {
-      return goog.dom.forms.getValue(els);
-    } else {
-      for (var i = 0;i < els.length;i++) {
-        var val = goog.dom.forms.getValue(els[i]);
-        if (val) {
-          return val;
-        }
-      }
-    }
-  }
-  return null;
-};
-goog.dom.forms.getInputChecked_ = function(el) {
-  return el.checked ? el.value : null;
-};
-goog.dom.forms.getSelectSingle_ = function(el) {
-  var selectedIndex = el.selectedIndex;
-  return selectedIndex >= 0 ? el.options[selectedIndex].value : null;
-};
-goog.dom.forms.getSelectMultiple_ = function(el) {
-  var values = [];
-  for (var option, i = 0;option = el.options[i];i++) {
-    if (option.selected) {
-      values.push(option.value);
-    }
-  }
-  return values.length ? values : null;
-};
-goog.dom.forms.setValue = function(el, opt_value) {
-  var type = el.type;
-  if (goog.isDef(type)) {
-    switch(type.toLowerCase()) {
-      case "checkbox":
-      ;
-      case "radio":
-        goog.dom.forms.setInputChecked_(el, (opt_value));
-        break;
-      case "select-one":
-        goog.dom.forms.setSelectSingle_(el, (opt_value));
-        break;
-      case "select-multiple":
-        goog.dom.forms.setSelectMultiple_(el, (opt_value));
-        break;
-      default:
-        el.value = goog.isDefAndNotNull(opt_value) ? opt_value : "";
-    }
-  }
-};
-goog.dom.forms.setInputChecked_ = function(el, opt_value) {
-  el.checked = opt_value ? "checked" : null;
-};
-goog.dom.forms.setSelectSingle_ = function(el, opt_value) {
-  el.selectedIndex = -1;
-  if (goog.isString(opt_value)) {
-    for (var option, i = 0;option = el.options[i];i++) {
-      if (option.value == opt_value) {
-        option.selected = true;
-        break;
-      }
-    }
-  }
-};
-goog.dom.forms.setSelectMultiple_ = function(el, opt_value) {
-  if (goog.isString(opt_value)) {
-    opt_value = [opt_value];
-  }
-  for (var option, i = 0;option = el.options[i];i++) {
-    option.selected = false;
-    if (opt_value) {
-      for (var value, j = 0;value = opt_value[j];j++) {
-        if (option.value == value) {
-          option.selected = true;
-        }
-      }
-    }
-  }
-};
-goog.provide("hsnd.systems.control");
-goog.require("cljs.core");
-goog.require("hsnd.entity");
-goog.require("hsnd.component");
-hsnd.systems.control.init = function init() {
-  return null;
-};
-hsnd.systems.control.draw = function draw() {
-  return null;
-};
-hsnd.systems.control.move = function move(key, value) {
-  var components = hsnd.component.by_name.call(null, "player-controlled");
-  return cljs.core.doall.call(null, cljs.core.map.call(null, function(components) {
-    return function(p1__10882_SHARP_) {
-      return hsnd.component.set.call(null, p1__10882_SHARP_, key, value);
-    };
-  }(components), components));
-};
-hsnd.systems.control.up = function up() {
-  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dy", "dy", 1719547243), -1);
-};
-hsnd.systems.control.left = function left() {
-  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dx", "dx", -381796732), -1);
-};
-hsnd.systems.control.down = function down() {
-  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 1);
-};
-hsnd.systems.control.right = function right() {
-  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dx", "dx", -381796732), 1);
-};
-hsnd.systems.control.stop = function stop() {
-  hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dx", "dx", -381796732), 0);
-  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 0);
-};
-hsnd.systems.control.controls = new cljs.core.PersistentArrayMap(null, 4, [87, hsnd.systems.control.up, 65, hsnd.systems.control.left, 83, hsnd.systems.control.down, 68, hsnd.systems.control.right], null);
-hsnd.systems.control.keydown = function keydown(key_code) {
-  if (cljs.core.contains_QMARK_.call(null, hsnd.systems.control.controls, key_code)) {
-    return hsnd.systems.control.controls.call(null, key_code).call(null);
-  } else {
-    return null;
-  }
-};
-hsnd.systems.control.keyup = function keyup() {
-  return hsnd.systems.control.stop.call(null);
-};
-hsnd.systems.control.update_entity = function update_entity(entity) {
-  var map__10885 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "player-controlled"));
-  var map__10885__$1 = cljs.core.seq_QMARK_.call(null, map__10885) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10885) : map__10885;
-  var dx = cljs.core.get.call(null, map__10885__$1, new cljs.core.Keyword(null, "dx", "dx", -381796732));
-  var dy = cljs.core.get.call(null, map__10885__$1, new cljs.core.Keyword(null, "dy", "dy", 1719547243));
-  var position = hsnd.entity.get.call(null, entity, "position");
-  if (!(position == null)) {
-    var next_position = hsnd.entity.get_with_defaults.call(null, entity, "next-position", hsnd.component.get_hash.call(null, position));
-    if (cljs.core.not_EQ_.call(null, 0, dx) || cljs.core.not_EQ_.call(null, 0, dy)) {
-      var map__10886 = hsnd.component.get_hash.call(null, position);
-      var map__10886__$1 = cljs.core.seq_QMARK_.call(null, map__10886) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10886) : map__10886;
-      var x = cljs.core.get.call(null, map__10886__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-      var y = cljs.core.get.call(null, map__10886__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
-      var nx = x + dx;
-      var ny = y + dy;
-      return hsnd.component.reset.call(null, next_position, new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), nx, new cljs.core.Keyword(null, "y", "y", -1757859776), ny], null));
-    } else {
-      return null;
-    }
-  } else {
-    return null;
-  }
-};
-hsnd.systems.control.update = function update() {
-  return hsnd.entity.each.call(null, "player-controlled", hsnd.systems.control.update_entity);
-};
-hsnd.systems.control.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.control.init, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.control.update, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.control.draw, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.control.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.control.keyup], 
-null);
-goog.provide("hsnd.systems.blocked");
-goog.require("cljs.core");
-goog.require("hsnd.callback");
-goog.require("hsnd.component");
-goog.require("hsnd.entity");
-hsnd.systems.blocked.init = function init() {
-  return null;
-};
-hsnd.systems.blocked.draw = function draw() {
-  return null;
-};
-hsnd.systems.blocked.keydown = function keydown() {
-  return null;
-};
-hsnd.systems.blocked.keyup = function keyup() {
-  return null;
-};
-hsnd.systems.blocked.update = function update() {
-  return null;
-};
-hsnd.systems.blocked.handle_collision = function handle_collision(entity, other_entity) {
-  var player_QMARK_ = cljs.core._EQ_.call(null, "player", entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177)));
-  var other_not_enemy_QMARK_ = hsnd.entity.get.call(null, other_entity, "enemy") == null;
-  if (player_QMARK_ && other_not_enemy_QMARK_) {
-    return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(other_entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177))), cljs.core.str(" is blocking your path")].join(""));
-  } else {
-    return null;
-  }
-};
-hsnd.systems.blocked.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.blocked.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.blocked.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.blocked.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.blocked.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.blocked.keyup, 
-new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.blocked.handle_collision], null)], null);
-goog.provide("hsnd.systems.collision");
-goog.require("cljs.core");
-goog.require("hsnd.callback");
-goog.require("hsnd.entity");
-goog.require("hsnd.component");
-hsnd.systems.collision.init = function init() {
-  return null;
-};
-hsnd.systems.collision.draw = function draw() {
-  return null;
-};
-hsnd.systems.collision.keydown = function keydown() {
-  return null;
-};
-hsnd.systems.collision.keyup = function keyup() {
-  return null;
-};
-hsnd.systems.collision.position_cell = function position_cell(entity, position_kind) {
-  return hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, position_kind));
-};
-hsnd.systems.collision.cell = function cell(entity) {
-  return hsnd.systems.collision.position_cell.call(null, entity, "position");
-};
-hsnd.systems.collision.next_cell = function next_cell(entity) {
-  return hsnd.systems.collision.position_cell.call(null, entity, "next-position");
-};
-hsnd.systems.collision.cell_taken_by = function cell_taken_by(cells_taken, entity) {
-  var position = hsnd.entity.get.call(null, entity, "position");
-  var cell = hsnd.component.get_hash.call(null, position);
-  var not_passable_QMARK_ = hsnd.entity.get.call(null, entity, "passable") == null;
-  if (not_passable_QMARK_) {
-    return cljs.core.assoc_BANG_.call(null, cells_taken, cell, entity);
-  } else {
-    return cells_taken;
-  }
-};
-hsnd.systems.collision.detect_taken_cells = function detect_taken_cells() {
-  var cells_taken = cljs.core.transient$.call(null, cljs.core.PersistentArrayMap.EMPTY);
-  return cljs.core.persistent_BANG_.call(null, hsnd.entity.reduce.call(null, "position", hsnd.systems.collision.cell_taken_by, cells_taken));
-};
-hsnd.systems.collision.collisions_for = function collisions_for(cells_taken, entity) {
-  var next_position = hsnd.entity.get.call(null, entity, "next-position");
-  var position = hsnd.entity.get.call(null, entity, "position");
-  var its_next_cell = hsnd.systems.collision.next_cell.call(null, entity);
-  var collision = cells_taken.call(null, its_next_cell);
-  if (!(collision == null || cljs.core._EQ_.call(null, entity, collision))) {
-    hsnd.component.reset.call(null, next_position, hsnd.component.get_hash.call(null, position));
-    return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "collision", "collision", -201625508), entity, collision);
-  } else {
-    return null;
-  }
-};
-hsnd.systems.collision.update = function update() {
-  var cells_taken = hsnd.systems.collision.detect_taken_cells.call(null);
-  return hsnd.entity.each.call(null, "next-position", cljs.core.partial.call(null, hsnd.systems.collision.collisions_for, cells_taken));
-};
-hsnd.systems.collision.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.collision.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.collision.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.collision.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.collision.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.collision.keyup], 
-null);
-goog.provide("domina.support");
-goog.require("cljs.core");
-goog.require("goog.events");
-goog.require("goog.dom");
-var div_17163 = document.createElement("div");
-var test_html_17164 = "   \x3clink/\x3e\x3ctable\x3e\x3c/table\x3e\x3ca href\x3d'/a' style\x3d'top:1px;float:left;opacity:.55;'\x3ea\x3c/a\x3e\x3cinput type\x3d'checkbox'/\x3e";
-div_17163.innerHTML = test_html_17164;
-domina.support.leading_whitespace_QMARK_ = cljs.core._EQ_.call(null, div_17163.firstChild.nodeType, 3);
-domina.support.extraneous_tbody_QMARK_ = cljs.core._EQ_.call(null, div_17163.getElementsByTagName("tbody").length, 0);
-domina.support.unscoped_html_elements_QMARK_ = cljs.core._EQ_.call(null, div_17163.getElementsByTagName("link").length, 0);
-goog.provide("hsnd.initial");
-goog.require("cljs.core");
-goog.require("hsnd.entity");
-hsnd.initial.player = hsnd.entity.new$.call(null, "player");
-hsnd.entity.add.call(null, hsnd.initial.player, "player", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.player, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 7, new cljs.core.Keyword(null, "y", "y", -1757859776), 15], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "@"], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "player-controlled", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "dx", "dx", -381796732), 0, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 0], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "camera", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "active", "active", 1895962068), true], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 1], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 100], null));
-hsnd.initial.rock = hsnd.entity.new$.call(null, "rock");
-hsnd.entity.add.call(null, hsnd.initial.rock, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 5, new cljs.core.Keyword(null, "y", "y", -1757859776), 5], null));
-hsnd.entity.add.call(null, hsnd.initial.rock, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "#"], null));
-hsnd.initial.example_log = hsnd.entity.new$.call(null, "welcome-message");
-hsnd.entity.add.call(null, hsnd.initial.example_log, "log-message", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "Welcome to Hack, Slash and Deathblaze!"], null));
-hsnd.initial.goblin = hsnd.entity.new$.call(null, "goblin");
-hsnd.entity.add.call(null, hsnd.initial.goblin, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 15, new cljs.core.Keyword(null, "y", "y", -1757859776), 5], null));
-hsnd.entity.add.call(null, hsnd.initial.goblin, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "g"], null));
-hsnd.entity.add.call(null, hsnd.initial.goblin, "enemy", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.goblin, "damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 1], null));
-hsnd.entity.add.call(null, hsnd.initial.goblin, "sight", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "radius", "radius", -2073122258), 10], null));
-hsnd.entity.add.call(null, hsnd.initial.goblin, "melee-ai", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.goblin, "health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 7], null));
-hsnd.entity.add.call(null, hsnd.initial.goblin, "loot", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["goblin body", new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, 
-["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "~"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], null)], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["knife", new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 
-5, cljs.core.PersistentVector.EMPTY_NODE, ["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "|"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["cost", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 32], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], 
-null)], null)], null)], null)], null));
-goog.provide("goog.dom.classes");
-goog.require("goog.array");
-goog.dom.classes.set = function(element, className) {
-  element.className = className;
-};
-goog.dom.classes.get = function(element) {
-  var className = element.className;
-  return goog.isString(className) && className.match(/\S+/g) || [];
-};
-goog.dom.classes.add = function(element, var_args) {
-  var classes = goog.dom.classes.get(element);
-  var args = goog.array.slice(arguments, 1);
-  var expectedCount = classes.length + args.length;
-  goog.dom.classes.add_(classes, args);
-  goog.dom.classes.set(element, classes.join(" "));
-  return classes.length == expectedCount;
-};
-goog.dom.classes.remove = function(element, var_args) {
-  var classes = goog.dom.classes.get(element);
-  var args = goog.array.slice(arguments, 1);
-  var newClasses = goog.dom.classes.getDifference_(classes, args);
-  goog.dom.classes.set(element, newClasses.join(" "));
-  return newClasses.length == classes.length - args.length;
-};
-goog.dom.classes.add_ = function(classes, args) {
-  for (var i = 0;i < args.length;i++) {
-    if (!goog.array.contains(classes, args[i])) {
-      classes.push(args[i]);
-    }
-  }
-};
-goog.dom.classes.getDifference_ = function(arr1, arr2) {
-  return goog.array.filter(arr1, function(item) {
-    return!goog.array.contains(arr2, item);
-  });
-};
-goog.dom.classes.swap = function(element, fromClass, toClass) {
-  var classes = goog.dom.classes.get(element);
-  var removed = false;
-  for (var i = 0;i < classes.length;i++) {
-    if (classes[i] == fromClass) {
-      goog.array.splice(classes, i--, 1);
-      removed = true;
-    }
-  }
-  if (removed) {
-    classes.push(toClass);
-    goog.dom.classes.set(element, classes.join(" "));
-  }
-  return removed;
-};
-goog.dom.classes.addRemove = function(element, classesToRemove, classesToAdd) {
-  var classes = goog.dom.classes.get(element);
-  if (goog.isString(classesToRemove)) {
-    goog.array.remove(classes, classesToRemove);
-  } else {
-    if (goog.isArray(classesToRemove)) {
-      classes = goog.dom.classes.getDifference_(classes, classesToRemove);
-    }
-  }
-  if (goog.isString(classesToAdd) && !goog.array.contains(classes, classesToAdd)) {
-    classes.push(classesToAdd);
-  } else {
-    if (goog.isArray(classesToAdd)) {
-      goog.dom.classes.add_(classes, classesToAdd);
-    }
-  }
-  goog.dom.classes.set(element, classes.join(" "));
-};
-goog.dom.classes.has = function(element, className) {
-  return goog.array.contains(goog.dom.classes.get(element), className);
-};
-goog.dom.classes.enable = function(element, className, enabled) {
-  if (enabled) {
-    goog.dom.classes.add(element, className);
-  } else {
-    goog.dom.classes.remove(element, className);
-  }
-};
-goog.dom.classes.toggle = function(element, className) {
-  var add = !goog.dom.classes.has(element, className);
-  goog.dom.classes.enable(element, className, add);
-  return add;
-};
-goog.provide("goog.dom.xml");
-goog.require("goog.dom");
-goog.require("goog.dom.NodeType");
-goog.dom.xml.MAX_XML_SIZE_KB = 2 * 1024;
-goog.dom.xml.MAX_ELEMENT_DEPTH = 256;
-goog.dom.xml.createDocument = function(opt_rootTagName, opt_namespaceUri) {
-  if (opt_namespaceUri && !opt_rootTagName) {
-    throw Error("Can't create document with namespace and no root tag");
-  }
-  if (document.implementation && document.implementation.createDocument) {
-    return document.implementation.createDocument(opt_namespaceUri || "", opt_rootTagName || "", null);
-  } else {
-    if (typeof ActiveXObject != "undefined") {
-      var doc = goog.dom.xml.createMsXmlDocument_();
-      if (doc) {
-        if (opt_rootTagName) {
-          doc.appendChild(doc.createNode(goog.dom.NodeType.ELEMENT, opt_rootTagName, opt_namespaceUri || ""));
-        }
-        return doc;
-      }
-    }
-  }
-  throw Error("Your browser does not support creating new documents");
-};
-goog.dom.xml.loadXml = function(xml) {
-  if (typeof DOMParser != "undefined") {
-    return(new DOMParser).parseFromString(xml, "application/xml");
-  } else {
-    if (typeof ActiveXObject != "undefined") {
-      var doc = goog.dom.xml.createMsXmlDocument_();
-      doc.loadXML(xml);
-      return doc;
-    }
-  }
-  throw Error("Your browser does not support loading xml documents");
-};
-goog.dom.xml.serialize = function(xml) {
-  if (typeof XMLSerializer != "undefined") {
-    return(new XMLSerializer).serializeToString(xml);
-  }
-  var text = xml.xml;
-  if (text) {
-    return text;
-  }
-  throw Error("Your browser does not support serializing XML documents");
-};
-goog.dom.xml.selectSingleNode = function(node, path) {
-  if (typeof node.selectSingleNode != "undefined") {
-    var doc = goog.dom.getOwnerDocument(node);
-    if (typeof doc.setProperty != "undefined") {
-      doc.setProperty("SelectionLanguage", "XPath");
-    }
-    return node.selectSingleNode(path);
-  } else {
-    if (document.implementation.hasFeature("XPath", "3.0")) {
-      var doc = goog.dom.getOwnerDocument(node);
-      var resolver = doc.createNSResolver(doc.documentElement);
-      var result = doc.evaluate(path, node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-      return result.singleNodeValue;
-    }
-  }
-  return null;
-};
-goog.dom.xml.selectNodes = function(node, path) {
-  if (typeof node.selectNodes != "undefined") {
-    var doc = goog.dom.getOwnerDocument(node);
-    if (typeof doc.setProperty != "undefined") {
-      doc.setProperty("SelectionLanguage", "XPath");
-    }
-    return node.selectNodes(path);
-  } else {
-    if (document.implementation.hasFeature("XPath", "3.0")) {
-      var doc = goog.dom.getOwnerDocument(node);
-      var resolver = doc.createNSResolver(doc.documentElement);
-      var nodes = doc.evaluate(path, node, resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-      var results = [];
-      var count = nodes.snapshotLength;
-      for (var i = 0;i < count;i++) {
-        results.push(nodes.snapshotItem(i));
-      }
-      return results;
-    } else {
-      return[];
-    }
-  }
-};
-goog.dom.xml.setAttributes = function(element, attributes) {
-  for (var key in attributes) {
-    if (attributes.hasOwnProperty(key)) {
-      element.setAttribute(key, attributes[key]);
-    }
-  }
-};
-goog.dom.xml.createMsXmlDocument_ = function() {
-  var doc = new ActiveXObject("MSXML2.DOMDocument");
-  if (doc) {
-    doc.resolveExternals = false;
-    doc.validateOnParse = false;
-    try {
-      doc.setProperty("ProhibitDTD", true);
-      doc.setProperty("MaxXMLSize", goog.dom.xml.MAX_XML_SIZE_KB);
-      doc.setProperty("MaxElementDepth", goog.dom.xml.MAX_ELEMENT_DEPTH);
-    } catch (e) {
-    }
-  }
-  return doc;
-};
-goog.provide("hsnd.systems.camera");
-goog.require("cljs.core");
-goog.require("hsnd.entity");
-goog.require("hsnd.component");
-hsnd.systems.camera.init = function init() {
-  return null;
-};
-hsnd.systems.camera.draw = function draw() {
-  return null;
-};
-hsnd.systems.camera.keydown = function keydown() {
-  return null;
-};
-hsnd.systems.camera.keyup = function keyup() {
-  return null;
-};
-hsnd.systems.camera.update = function update() {
-  return null;
-};
-hsnd.systems.camera.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.camera.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.camera.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.camera.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.camera.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.camera.keyup], 
-null);
 goog.provide("goog.style");
 goog.require("goog.array");
 goog.require("goog.asserts");
@@ -38411,6 +38093,113 @@ clojure.string.escape = function escape__$1(s, cmap) {
     }
     break;
   }
+};
+goog.provide("goog.dom.xml");
+goog.require("goog.dom");
+goog.require("goog.dom.NodeType");
+goog.dom.xml.MAX_XML_SIZE_KB = 2 * 1024;
+goog.dom.xml.MAX_ELEMENT_DEPTH = 256;
+goog.dom.xml.createDocument = function(opt_rootTagName, opt_namespaceUri) {
+  if (opt_namespaceUri && !opt_rootTagName) {
+    throw Error("Can't create document with namespace and no root tag");
+  }
+  if (document.implementation && document.implementation.createDocument) {
+    return document.implementation.createDocument(opt_namespaceUri || "", opt_rootTagName || "", null);
+  } else {
+    if (typeof ActiveXObject != "undefined") {
+      var doc = goog.dom.xml.createMsXmlDocument_();
+      if (doc) {
+        if (opt_rootTagName) {
+          doc.appendChild(doc.createNode(goog.dom.NodeType.ELEMENT, opt_rootTagName, opt_namespaceUri || ""));
+        }
+        return doc;
+      }
+    }
+  }
+  throw Error("Your browser does not support creating new documents");
+};
+goog.dom.xml.loadXml = function(xml) {
+  if (typeof DOMParser != "undefined") {
+    return(new DOMParser).parseFromString(xml, "application/xml");
+  } else {
+    if (typeof ActiveXObject != "undefined") {
+      var doc = goog.dom.xml.createMsXmlDocument_();
+      doc.loadXML(xml);
+      return doc;
+    }
+  }
+  throw Error("Your browser does not support loading xml documents");
+};
+goog.dom.xml.serialize = function(xml) {
+  if (typeof XMLSerializer != "undefined") {
+    return(new XMLSerializer).serializeToString(xml);
+  }
+  var text = xml.xml;
+  if (text) {
+    return text;
+  }
+  throw Error("Your browser does not support serializing XML documents");
+};
+goog.dom.xml.selectSingleNode = function(node, path) {
+  if (typeof node.selectSingleNode != "undefined") {
+    var doc = goog.dom.getOwnerDocument(node);
+    if (typeof doc.setProperty != "undefined") {
+      doc.setProperty("SelectionLanguage", "XPath");
+    }
+    return node.selectSingleNode(path);
+  } else {
+    if (document.implementation.hasFeature("XPath", "3.0")) {
+      var doc = goog.dom.getOwnerDocument(node);
+      var resolver = doc.createNSResolver(doc.documentElement);
+      var result = doc.evaluate(path, node, resolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+      return result.singleNodeValue;
+    }
+  }
+  return null;
+};
+goog.dom.xml.selectNodes = function(node, path) {
+  if (typeof node.selectNodes != "undefined") {
+    var doc = goog.dom.getOwnerDocument(node);
+    if (typeof doc.setProperty != "undefined") {
+      doc.setProperty("SelectionLanguage", "XPath");
+    }
+    return node.selectNodes(path);
+  } else {
+    if (document.implementation.hasFeature("XPath", "3.0")) {
+      var doc = goog.dom.getOwnerDocument(node);
+      var resolver = doc.createNSResolver(doc.documentElement);
+      var nodes = doc.evaluate(path, node, resolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+      var results = [];
+      var count = nodes.snapshotLength;
+      for (var i = 0;i < count;i++) {
+        results.push(nodes.snapshotItem(i));
+      }
+      return results;
+    } else {
+      return[];
+    }
+  }
+};
+goog.dom.xml.setAttributes = function(element, attributes) {
+  for (var key in attributes) {
+    if (attributes.hasOwnProperty(key)) {
+      element.setAttribute(key, attributes[key]);
+    }
+  }
+};
+goog.dom.xml.createMsXmlDocument_ = function() {
+  var doc = new ActiveXObject("MSXML2.DOMDocument");
+  if (doc) {
+    doc.resolveExternals = false;
+    doc.validateOnParse = false;
+    try {
+      doc.setProperty("ProhibitDTD", true);
+      doc.setProperty("MaxXMLSize", goog.dom.xml.MAX_XML_SIZE_KB);
+      doc.setProperty("MaxElementDepth", goog.dom.xml.MAX_ELEMENT_DEPTH);
+    } catch (e) {
+    }
+  }
+  return doc;
 };
 goog.provide("domina");
 goog.require("cljs.core");
@@ -40074,6 +39863,394 @@ domina.xpath.xpath = function() {
   xpath.cljs$core$IFn$_invoke$arity$2 = xpath__2;
   return xpath;
 }();
+goog.provide("hsnd.systems.current_position");
+goog.require("cljs.core");
+goog.require("domina.xpath");
+goog.require("domina");
+goog.require("hsnd.entity");
+goog.require("hsnd.component");
+hsnd.systems.current_position.init = function init() {
+  return null;
+};
+hsnd.systems.current_position.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.current_position.keyup = function keyup() {
+  return null;
+};
+hsnd.systems.current_position.update = function update() {
+  return null;
+};
+hsnd.systems.current_position.view_query = "//div[@id\x3d'stats-position']";
+hsnd.systems.current_position.view = domina.xpath.xpath.call(null, hsnd.systems.current_position.view_query);
+hsnd.systems.current_position.draw_player_position = function draw_player_position(player) {
+  var position = hsnd.entity.get.call(null, player, "position");
+  var position_of_death = hsnd.entity.get.call(null, player, "position-of-death");
+  var dead_QMARK_ = !(hsnd.entity.get.call(null, player, "dead") == null);
+  var position__$1 = dead_QMARK_ ? position_of_death : position;
+  var map__10585 = hsnd.component.get_hash.call(null, position__$1);
+  var map__10585__$1 = cljs.core.seq_QMARK_.call(null, map__10585) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10585) : map__10585;
+  var x = cljs.core.get.call(null, map__10585__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__10585__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var representation = [cljs.core.str("( "), cljs.core.str(x), cljs.core.str("; "), cljs.core.str(y), cljs.core.str(" )")].join("");
+  return domina.set_text_BANG_.call(null, hsnd.systems.current_position.view, representation);
+};
+hsnd.systems.current_position.draw = function draw() {
+  return hsnd.entity.each.call(null, "player-controlled", hsnd.systems.current_position.draw_player_position);
+};
+hsnd.systems.current_position.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.current_position.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.current_position.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.current_position.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.current_position.keydown, new cljs.core.Keyword(null, "keyup", 
+"keyup", -794526927), hsnd.systems.current_position.keyup], null);
+goog.provide("hsnd.systems.control");
+goog.require("cljs.core");
+goog.require("hsnd.entity");
+goog.require("hsnd.component");
+hsnd.systems.control.init = function init() {
+  return null;
+};
+hsnd.systems.control.draw = function draw() {
+  return null;
+};
+hsnd.systems.control.move = function move(key, value) {
+  var components = hsnd.component.by_name.call(null, "player-controlled");
+  return cljs.core.doall.call(null, cljs.core.map.call(null, function(components) {
+    return function(p1__10882_SHARP_) {
+      return hsnd.component.set.call(null, p1__10882_SHARP_, key, value);
+    };
+  }(components), components));
+};
+hsnd.systems.control.up = function up() {
+  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dy", "dy", 1719547243), -1);
+};
+hsnd.systems.control.left = function left() {
+  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dx", "dx", -381796732), -1);
+};
+hsnd.systems.control.down = function down() {
+  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 1);
+};
+hsnd.systems.control.right = function right() {
+  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dx", "dx", -381796732), 1);
+};
+hsnd.systems.control.stop = function stop() {
+  hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dx", "dx", -381796732), 0);
+  return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 0);
+};
+hsnd.systems.control.controls = new cljs.core.PersistentArrayMap(null, 4, [87, hsnd.systems.control.up, 65, hsnd.systems.control.left, 83, hsnd.systems.control.down, 68, hsnd.systems.control.right], null);
+hsnd.systems.control.keydown = function keydown(key_code) {
+  if (cljs.core.contains_QMARK_.call(null, hsnd.systems.control.controls, key_code)) {
+    return hsnd.systems.control.controls.call(null, key_code).call(null);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.control.keyup = function keyup() {
+  return hsnd.systems.control.stop.call(null);
+};
+hsnd.systems.control.update_entity = function update_entity(entity) {
+  var map__10885 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "player-controlled"));
+  var map__10885__$1 = cljs.core.seq_QMARK_.call(null, map__10885) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10885) : map__10885;
+  var dx = cljs.core.get.call(null, map__10885__$1, new cljs.core.Keyword(null, "dx", "dx", -381796732));
+  var dy = cljs.core.get.call(null, map__10885__$1, new cljs.core.Keyword(null, "dy", "dy", 1719547243));
+  var position = hsnd.entity.get.call(null, entity, "position");
+  if (!(position == null)) {
+    var next_position = hsnd.entity.get_with_defaults.call(null, entity, "next-position", hsnd.component.get_hash.call(null, position));
+    if (cljs.core.not_EQ_.call(null, 0, dx) || cljs.core.not_EQ_.call(null, 0, dy)) {
+      var map__10886 = hsnd.component.get_hash.call(null, position);
+      var map__10886__$1 = cljs.core.seq_QMARK_.call(null, map__10886) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10886) : map__10886;
+      var x = cljs.core.get.call(null, map__10886__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+      var y = cljs.core.get.call(null, map__10886__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+      var nx = x + dx;
+      var ny = y + dy;
+      return hsnd.component.reset.call(null, next_position, new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), nx, new cljs.core.Keyword(null, "y", "y", -1757859776), ny], null));
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+hsnd.systems.control.update = function update() {
+  return hsnd.entity.each.call(null, "player-controlled", hsnd.systems.control.update_entity);
+};
+hsnd.systems.control.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.control.init, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.control.update, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.control.draw, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.control.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.control.keyup], 
+null);
+goog.provide("hsnd.systems.blocked");
+goog.require("cljs.core");
+goog.require("hsnd.callback");
+goog.require("hsnd.component");
+goog.require("hsnd.entity");
+hsnd.systems.blocked.init = function init() {
+  return null;
+};
+hsnd.systems.blocked.draw = function draw() {
+  return null;
+};
+hsnd.systems.blocked.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.blocked.keyup = function keyup() {
+  return null;
+};
+hsnd.systems.blocked.update = function update() {
+  return null;
+};
+hsnd.systems.blocked.handle_collision = function handle_collision(entity, other_entity) {
+  var player_QMARK_ = cljs.core._EQ_.call(null, "player", entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177)));
+  var other_not_enemy_QMARK_ = hsnd.entity.get.call(null, other_entity, "enemy") == null;
+  if (player_QMARK_ && other_not_enemy_QMARK_) {
+    return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(other_entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177))), cljs.core.str(" is blocking your path")].join(""));
+  } else {
+    return null;
+  }
+};
+hsnd.systems.blocked.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.blocked.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.blocked.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.blocked.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.blocked.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.blocked.keyup, 
+new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.blocked.handle_collision], null)], null);
+goog.provide("hsnd.systems.collision");
+goog.require("cljs.core");
+goog.require("hsnd.callback");
+goog.require("hsnd.entity");
+goog.require("hsnd.component");
+hsnd.systems.collision.init = function init() {
+  return null;
+};
+hsnd.systems.collision.draw = function draw() {
+  return null;
+};
+hsnd.systems.collision.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.collision.keyup = function keyup() {
+  return null;
+};
+hsnd.systems.collision.position_cell = function position_cell(entity, position_kind) {
+  return hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, position_kind));
+};
+hsnd.systems.collision.cell = function cell(entity) {
+  return hsnd.systems.collision.position_cell.call(null, entity, "position");
+};
+hsnd.systems.collision.next_cell = function next_cell(entity) {
+  return hsnd.systems.collision.position_cell.call(null, entity, "next-position");
+};
+hsnd.systems.collision.cell_taken_by = function cell_taken_by(cells_taken, entity) {
+  var position = hsnd.entity.get.call(null, entity, "position");
+  var cell = hsnd.component.get_hash.call(null, position);
+  var not_passable_QMARK_ = hsnd.entity.get.call(null, entity, "passable") == null;
+  if (not_passable_QMARK_) {
+    return cljs.core.assoc_BANG_.call(null, cells_taken, cell, entity);
+  } else {
+    return cells_taken;
+  }
+};
+hsnd.systems.collision.detect_taken_cells = function detect_taken_cells() {
+  var cells_taken = cljs.core.transient$.call(null, cljs.core.PersistentArrayMap.EMPTY);
+  return cljs.core.persistent_BANG_.call(null, hsnd.entity.reduce.call(null, "position", hsnd.systems.collision.cell_taken_by, cells_taken));
+};
+hsnd.systems.collision.collisions_for = function collisions_for(cells_taken, entity) {
+  var next_position = hsnd.entity.get.call(null, entity, "next-position");
+  var position = hsnd.entity.get.call(null, entity, "position");
+  var its_next_cell = hsnd.systems.collision.next_cell.call(null, entity);
+  var collision = cells_taken.call(null, its_next_cell);
+  if (!(collision == null || cljs.core._EQ_.call(null, entity, collision))) {
+    hsnd.component.reset.call(null, next_position, hsnd.component.get_hash.call(null, position));
+    return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "collision", "collision", -201625508), entity, collision);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.collision.update = function update() {
+  var cells_taken = hsnd.systems.collision.detect_taken_cells.call(null);
+  return hsnd.entity.each.call(null, "next-position", cljs.core.partial.call(null, hsnd.systems.collision.collisions_for, cells_taken));
+};
+hsnd.systems.collision.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.collision.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.collision.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.collision.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.collision.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.collision.keyup], 
+null);
+goog.provide("hsnd.initial");
+goog.require("cljs.core");
+goog.require("hsnd.entity");
+hsnd.initial.player = hsnd.entity.new$.call(null, "player");
+hsnd.entity.add.call(null, hsnd.initial.player, "player", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.player, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 7, new cljs.core.Keyword(null, "y", "y", -1757859776), 15], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "@"], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "player-controlled", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "dx", "dx", -381796732), 0, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 0], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "camera", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "active", "active", 1895962068), true], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 1], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 100], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "max-health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 100], null));
+hsnd.initial.rock = hsnd.entity.new$.call(null, "rock");
+hsnd.entity.add.call(null, hsnd.initial.rock, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 5, new cljs.core.Keyword(null, "y", "y", -1757859776), 5], null));
+hsnd.entity.add.call(null, hsnd.initial.rock, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "#"], null));
+hsnd.initial.resurrection_stone = hsnd.entity.new$.call(null, "resurrection stone");
+hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 25, new cljs.core.Keyword(null, "y", "y", -1757859776), 25], null));
+hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "\u00ae"], null));
+hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "resurrection-stone", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "radius", "radius", -2073122258), 5], null));
+hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "resurrection-stone-active", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.initial.resurrection_stone_2 = hsnd.entity.new$.call(null, "resurrection stone");
+hsnd.entity.add.call(null, hsnd.initial.resurrection_stone_2, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), -5, new cljs.core.Keyword(null, "y", "y", -1757859776), -5], null));
+hsnd.entity.add.call(null, hsnd.initial.resurrection_stone_2, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "\u00ae"], null));
+hsnd.entity.add.call(null, hsnd.initial.resurrection_stone_2, "resurrection-stone", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "radius", "radius", -2073122258), 10], null));
+hsnd.initial.example_log = hsnd.entity.new$.call(null, "welcome-message");
+hsnd.entity.add.call(null, hsnd.initial.example_log, "log-message", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "Welcome to Hack, Slash and Deathblaze!"], null));
+hsnd.initial.goblin = hsnd.entity.new$.call(null, "goblin");
+hsnd.entity.add.call(null, hsnd.initial.goblin, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 15, new cljs.core.Keyword(null, "y", "y", -1757859776), 5], null));
+hsnd.entity.add.call(null, hsnd.initial.goblin, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "g"], null));
+hsnd.entity.add.call(null, hsnd.initial.goblin, "enemy", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.goblin, "damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 1], null));
+hsnd.entity.add.call(null, hsnd.initial.goblin, "sight", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "radius", "radius", -2073122258), 10], null));
+hsnd.entity.add.call(null, hsnd.initial.goblin, "melee-ai", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.goblin, "health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 7], null));
+hsnd.entity.add.call(null, hsnd.initial.goblin, "loot", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["goblin body", new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, 
+["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "~"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], null)], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["knife", new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 
+5, cljs.core.PersistentVector.EMPTY_NODE, ["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "|"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["cost", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 32], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], 
+null)], null)], null)], null)], null));
+goog.provide("hsnd.systems.camera");
+goog.require("cljs.core");
+goog.require("hsnd.entity");
+goog.require("hsnd.component");
+hsnd.systems.camera.init = function init() {
+  return null;
+};
+hsnd.systems.camera.draw = function draw() {
+  return null;
+};
+hsnd.systems.camera.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.camera.keyup = function keyup() {
+  return null;
+};
+hsnd.systems.camera.update = function update() {
+  return null;
+};
+hsnd.systems.camera.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.camera.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.camera.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.camera.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.camera.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.camera.keyup], 
+null);
+goog.provide("hsnd.systems.resurrection");
+goog.require("cljs.core");
+goog.require("hsnd.callback");
+goog.require("hsnd.entity");
+goog.require("hsnd.component");
+hsnd.systems.resurrection.init = function init() {
+  return null;
+};
+hsnd.systems.resurrection.draw = function draw() {
+  return null;
+};
+hsnd.systems.resurrection.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.resurrection.keyup = function keyup() {
+  return null;
+};
+hsnd.systems.resurrection.resurrection_timeout = 250;
+hsnd.systems.resurrection.abs = function abs(value) {
+  if (value < 0) {
+    return-value;
+  } else {
+    return value;
+  }
+};
+hsnd.systems.resurrection.resurrect_at = function resurrect_at(player, stone) {
+  var stone_position = hsnd.entity.get.call(null, stone, "position");
+  var position = hsnd.component.get_hash.call(null, stone_position);
+  return hsnd.entity.add.call(null, player, "position", position);
+};
+hsnd.systems.resurrection.resurrect = function resurrect(player) {
+  hsnd.entity.remove.call(null, player, "resurrection-timeout");
+  hsnd.entity.remove.call(null, player, "dead");
+  var health_component_10736 = hsnd.entity.get.call(null, player, "health");
+  var max_health_10737 = hsnd.component.get.call(null, hsnd.entity.get.call(null, player, "max-health"), new cljs.core.Keyword(null, "value", "value", 305978217));
+  hsnd.component.set.call(null, health_component_10736, new cljs.core.Keyword(null, "value", "value", 305978217), max_health_10737);
+  hsnd.entity.each.call(null, "resurrection-stone-active", cljs.core.partial.call(null, hsnd.systems.resurrection.resurrect_at, player));
+  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), "player is resurrected");
+};
+hsnd.systems.resurrection.resurrection_turn = function resurrection_turn(player) {
+  var is_player_QMARK_ = !(hsnd.entity.get.call(null, player, "player") == null);
+  if (is_player_QMARK_) {
+    var resurrection = hsnd.entity.get_with_defaults.call(null, player, "resurrection-timeout", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), hsnd.systems.resurrection.resurrection_timeout], null));
+    var current_turn = hsnd.component.get.call(null, resurrection, new cljs.core.Keyword(null, "value", "value", 305978217));
+    var new_turn = current_turn - 1;
+    if (cljs.core._EQ_.call(null, current_turn, 0)) {
+      return hsnd.systems.resurrection.resurrect.call(null, player);
+    } else {
+      return hsnd.component.set.call(null, resurrection, new cljs.core.Keyword(null, "value", "value", 305978217), new_turn);
+    }
+  } else {
+    return null;
+  }
+};
+hsnd.systems.resurrection.deactivate_current_stone = function() {
+  var deactivate_current_stone = null;
+  var deactivate_current_stone__0 = function() {
+    return hsnd.entity.each.call(null, "resurrection-stone-active", deactivate_current_stone);
+  };
+  var deactivate_current_stone__1 = function(stone) {
+    return hsnd.entity.remove.call(null, stone, "resurrection-stone-active");
+  };
+  deactivate_current_stone = function(stone) {
+    switch(arguments.length) {
+      case 0:
+        return deactivate_current_stone__0.call(this);
+      case 1:
+        return deactivate_current_stone__1.call(this, stone);
+    }
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  deactivate_current_stone.cljs$core$IFn$_invoke$arity$0 = deactivate_current_stone__0;
+  deactivate_current_stone.cljs$core$IFn$_invoke$arity$1 = deactivate_current_stone__1;
+  return deactivate_current_stone;
+}();
+hsnd.systems.resurrection.activate_stone = function activate_stone(stone) {
+  hsnd.entity.add.call(null, stone, "resurrection-stone-active", cljs.core.PersistentArrayMap.EMPTY);
+  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), "you activated resurrection stone");
+};
+hsnd.systems.resurrection.deflect_enemy = function deflect_enemy(stone, enemy) {
+  var enemy_alive_QMARK_ = hsnd.entity.get.call(null, enemy, "dead") == null;
+  if (enemy_alive_QMARK_) {
+    var position = hsnd.entity.get.call(null, stone, "position");
+    var map__10741 = hsnd.component.get_hash.call(null, position);
+    var map__10741__$1 = cljs.core.seq_QMARK_.call(null, map__10741) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10741) : map__10741;
+    var x = cljs.core.get.call(null, map__10741__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+    var y = cljs.core.get.call(null, map__10741__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+    var enemy_position = hsnd.entity.get.call(null, enemy, "position");
+    var map__10742 = hsnd.component.get_hash.call(null, enemy_position);
+    var map__10742__$1 = cljs.core.seq_QMARK_.call(null, map__10742) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10742) : map__10742;
+    var tx = cljs.core.get.call(null, map__10742__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+    var ty = cljs.core.get.call(null, map__10742__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+    var enemy_next_position = hsnd.entity.get_with_defaults.call(null, enemy, "next-position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), tx, new cljs.core.Keyword(null, "y", "y", -1757859776), ty], null));
+    var map__10743 = hsnd.component.get_hash.call(null, enemy_next_position);
+    var map__10743__$1 = cljs.core.seq_QMARK_.call(null, map__10743) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10743) : map__10743;
+    var nx = cljs.core.get.call(null, map__10743__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+    var ny = cljs.core.get.call(null, map__10743__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+    var resurrection_stone = hsnd.entity.get.call(null, stone, "resurrection-stone");
+    var effect_radius = hsnd.component.get.call(null, resurrection_stone, new cljs.core.Keyword(null, "radius", "radius", -2073122258));
+    var dx = hsnd.systems.resurrection.abs.call(null, x - nx);
+    var dy = hsnd.systems.resurrection.abs.call(null, y - ny);
+    if (dx <= effect_radius && dy <= effect_radius) {
+      return hsnd.component.reset.call(null, enemy_next_position, new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), tx, new cljs.core.Keyword(null, "y", "y", -1757859776), ty], null));
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+hsnd.systems.resurrection.deflect_enemies = function deflect_enemies(stone) {
+  return hsnd.entity.each.call(null, "enemy", cljs.core.partial.call(null, hsnd.systems.resurrection.deflect_enemy, stone));
+};
+hsnd.systems.resurrection.handle_collision = function handle_collision(entity, other_entity) {
+  var player_QMARK_ = !(hsnd.entity.get.call(null, entity, "player") == null);
+  var other_stone_QMARK_ = !(hsnd.entity.get.call(null, other_entity, "resurrection-stone") == null);
+  var non_active_stone_QMARK_ = hsnd.entity.get.call(null, other_entity, "resurrection-stone-active") == null;
+  if (player_QMARK_ && other_stone_QMARK_ && non_active_stone_QMARK_) {
+    hsnd.systems.resurrection.deactivate_current_stone.call(null);
+    return hsnd.systems.resurrection.activate_stone.call(null, other_entity);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.resurrection.update = function update() {
+  hsnd.entity.each.call(null, "dead", hsnd.systems.resurrection.resurrection_turn);
+  return hsnd.entity.each.call(null, "resurrection-stone-active", hsnd.systems.resurrection.deflect_enemies);
+};
+hsnd.systems.resurrection.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.resurrection.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.resurrection.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.resurrection.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.resurrection.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), 
+hsnd.systems.resurrection.keyup, new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.resurrection.handle_collision], null)], null);
 goog.provide("hsnd.systems.log");
 goog.require("cljs.core");
 goog.require("domina.xpath");
@@ -41222,14 +41399,14 @@ hsnd.systems.melee_ai.next_move = function next_move(its_position, target_positi
 hsnd.systems.melee_ai.chase = function chase(entity, player) {
   var its_position = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "position"));
   var player_position = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, player, "position"));
-  var map__10895 = hsnd.systems.melee_ai.next_move.call(null, its_position, player_position);
-  var map__10895__$1 = cljs.core.seq_QMARK_.call(null, map__10895) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10895) : map__10895;
-  var dx = cljs.core.get.call(null, map__10895__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var dy = cljs.core.get.call(null, map__10895__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
-  var map__10896 = its_position;
-  var map__10896__$1 = cljs.core.seq_QMARK_.call(null, map__10896) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10896) : map__10896;
-  var x = cljs.core.get.call(null, map__10896__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10896__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__10574 = hsnd.systems.melee_ai.next_move.call(null, its_position, player_position);
+  var map__10574__$1 = cljs.core.seq_QMARK_.call(null, map__10574) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10574) : map__10574;
+  var dx = cljs.core.get.call(null, map__10574__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var dy = cljs.core.get.call(null, map__10574__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__10575 = its_position;
+  var map__10575__$1 = cljs.core.seq_QMARK_.call(null, map__10575) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10575) : map__10575;
+  var x = cljs.core.get.call(null, map__10575__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__10575__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   var nx = x + dx;
   var ny = y + dy;
   var next_position_hash = new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), nx, new cljs.core.Keyword(null, "y", "y", -1757859776), ny], null);
@@ -41237,14 +41414,14 @@ hsnd.systems.melee_ai.chase = function chase(entity, player) {
   return hsnd.component.reset.call(null, next_position, next_position_hash);
 };
 hsnd.systems.melee_ai.in_sight_QMARK_ = function in_sight_QMARK_(entity, player) {
-  var map__10899 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "position"));
-  var map__10899__$1 = cljs.core.seq_QMARK_.call(null, map__10899) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10899) : map__10899;
-  var x = cljs.core.get.call(null, map__10899__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10899__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
-  var map__10900 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, player, "position"));
-  var map__10900__$1 = cljs.core.seq_QMARK_.call(null, map__10900) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10900) : map__10900;
-  var tx = cljs.core.get.call(null, map__10900__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var ty = cljs.core.get.call(null, map__10900__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__10578 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "position"));
+  var map__10578__$1 = cljs.core.seq_QMARK_.call(null, map__10578) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10578) : map__10578;
+  var x = cljs.core.get.call(null, map__10578__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__10578__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__10579 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, player, "position"));
+  var map__10579__$1 = cljs.core.seq_QMARK_.call(null, map__10579) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10579) : map__10579;
+  var tx = cljs.core.get.call(null, map__10579__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var ty = cljs.core.get.call(null, map__10579__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   var dx = hsnd.systems.melee_ai.abs.call(null, x - tx);
   var dy = hsnd.systems.melee_ai.abs.call(null, y - ty);
   var sight_radius = hsnd.component.get.call(null, hsnd.entity.get.call(null, entity, "sight"), new cljs.core.Keyword(null, "radius", "radius", -2073122258));
@@ -41306,11 +41483,13 @@ goog.require("cljs.core");
 goog.require("hsnd.systems.blocked");
 goog.require("hsnd.systems.draw");
 goog.require("hsnd.systems.death");
+goog.require("hsnd.systems.resurrection");
 goog.require("hsnd.systems.log");
 goog.require("hsnd.systems.collision");
 goog.require("hsnd.callback");
 goog.require("hsnd.systems.battle");
 goog.require("hsnd.systems.loot");
+goog.require("hsnd.systems.current_position");
 goog.require("hsnd.systems.control");
 goog.require("hsnd.systems.movement");
 goog.require("hsnd.systems.melee_ai");
@@ -41318,9 +41497,9 @@ goog.require("hsnd.initial");
 goog.require("domina.events");
 hsnd.core.fps = 60;
 hsnd.core.interval = 1E3 / hsnd.core.fps;
-hsnd.core.systems = new cljs.core.PersistentVector(null, 10, 5, cljs.core.PersistentVector.EMPTY_NODE, [hsnd.systems.draw.system, hsnd.systems.control.system, hsnd.systems.collision.system, hsnd.systems.movement.system, hsnd.systems.blocked.system, hsnd.systems.battle.system, hsnd.systems.death.system, hsnd.systems.loot.system, hsnd.systems.melee_ai.system, hsnd.systems.log.system], null);
-cljs.core.doall.call(null, cljs.core.map.call(null, function(p1__10573_SHARP_) {
-  return p1__10573_SHARP_.call(null, new cljs.core.Keyword(null, "init", "init", -1875481434)).call(null);
+hsnd.core.systems = new cljs.core.PersistentVector(null, 12, 5, cljs.core.PersistentVector.EMPTY_NODE, [hsnd.systems.draw.system, hsnd.systems.current_position.system, hsnd.systems.control.system, hsnd.systems.collision.system, hsnd.systems.resurrection.system, hsnd.systems.movement.system, hsnd.systems.blocked.system, hsnd.systems.battle.system, hsnd.systems.death.system, hsnd.systems.loot.system, hsnd.systems.melee_ai.system, hsnd.systems.log.system], null);
+cljs.core.doall.call(null, cljs.core.map.call(null, function(p1__10714_SHARP_) {
+  return p1__10714_SHARP_.call(null, new cljs.core.Keyword(null, "init", "init", -1875481434)).call(null);
 }, hsnd.core.systems));
 cljs.core.doall.call(null, cljs.core.map.call(null, function(system) {
   if (cljs.core.contains_QMARK_.call(null, system, new cljs.core.Keyword(null, "listeners", "listeners", 394544445))) {
@@ -41329,24 +41508,24 @@ cljs.core.doall.call(null, cljs.core.map.call(null, function(system) {
     return null;
   }
 }, hsnd.core.systems));
-hsnd.core.run = function run(p__10574) {
-  var map__10576 = p__10574;
-  var map__10576__$1 = cljs.core.seq_QMARK_.call(null, map__10576) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10576) : map__10576;
-  var update = cljs.core.get.call(null, map__10576__$1, new cljs.core.Keyword(null, "update", "update", 1045576396));
-  var draw = cljs.core.get.call(null, map__10576__$1, new cljs.core.Keyword(null, "draw", "draw", 1358331674));
+hsnd.core.run = function run(p__10715) {
+  var map__10717 = p__10715;
+  var map__10717__$1 = cljs.core.seq_QMARK_.call(null, map__10717) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10717) : map__10717;
+  var update = cljs.core.get.call(null, map__10717__$1, new cljs.core.Keyword(null, "update", "update", 1045576396));
+  var draw = cljs.core.get.call(null, map__10717__$1, new cljs.core.Keyword(null, "draw", "draw", 1358331674));
   update.call(null);
   return draw.call(null);
 };
-hsnd.core.keydown = function keydown(key_code, p__10577) {
-  var map__10579 = p__10577;
-  var map__10579__$1 = cljs.core.seq_QMARK_.call(null, map__10579) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10579) : map__10579;
-  var keydown__$1 = cljs.core.get.call(null, map__10579__$1, new cljs.core.Keyword(null, "keydown", "keydown", -629268186));
+hsnd.core.keydown = function keydown(key_code, p__10718) {
+  var map__10720 = p__10718;
+  var map__10720__$1 = cljs.core.seq_QMARK_.call(null, map__10720) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10720) : map__10720;
+  var keydown__$1 = cljs.core.get.call(null, map__10720__$1, new cljs.core.Keyword(null, "keydown", "keydown", -629268186));
   return keydown__$1.call(null, key_code);
 };
-hsnd.core.keyup = function keyup(p__10580) {
-  var map__10582 = p__10580;
-  var map__10582__$1 = cljs.core.seq_QMARK_.call(null, map__10582) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10582) : map__10582;
-  var keyup__$1 = cljs.core.get.call(null, map__10582__$1, new cljs.core.Keyword(null, "keyup", "keyup", -794526927));
+hsnd.core.keyup = function keyup(p__10721) {
+  var map__10723 = p__10721;
+  var map__10723__$1 = cljs.core.seq_QMARK_.call(null, map__10723) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10723) : map__10723;
+  var keyup__$1 = cljs.core.get.call(null, map__10723__$1, new cljs.core.Keyword(null, "keyup", "keyup", -794526927));
   return keyup__$1.call(null);
 };
 hsnd.core.run_all = function run_all(func) {
