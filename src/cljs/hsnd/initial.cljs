@@ -7,9 +7,11 @@
 (entity/add player "tile" {:value "@"})
 (entity/add player "player-controlled" {:dx 0 :dy 0})
 (entity/add player "camera" {:active true})
+(entity/add player "base-damage" {:value 1})
 (entity/add player "damage" {:value 1})
 (entity/add player "health" {:value 100})
 (entity/add player "max-health" {:value 100})
+(entity/add player "busy" {:value false})
 
 (def rock (entity/new "rock"))
 (entity/add rock "position" {:x 5 :y 5})
@@ -43,5 +45,34 @@
                               ["passable" {}]]]
                             ["knife"
                              [["tile" {:value "|"}]
+                              ["stats" {:damage 1}]
+                              ["item" {}]
+                              ["equippable" {}]
                               ["cost" {:value 32}]
                               ["passable" {}]]]]})
+
+(def small-knife (entity/new "small knife"))
+(entity/add small-knife "in-inventory" {})
+(entity/add small-knife "stats" {:damage 2})
+(entity/add small-knife "equippable" {})
+(entity/add small-knife "item" {})
+(entity/add small-knife "passable" {})
+(entity/add small-knife "tile" {:value "|"})
+
+(def leather-jacket (entity/new "leather jacket"))
+(entity/add leather-jacket "in-inventory" {})
+(entity/add leather-jacket "stats" {:armor 3})
+(entity/add leather-jacket "equippable" {})
+(entity/add leather-jacket "item" {})
+(entity/add leather-jacket "passable" {})
+(entity/add leather-jacket "tile" {:value "["})
+
+(def junk (entity/new "some junk"))
+(entity/add junk "in-inventory" {})
+(entity/add junk "description" {:value "Useless junk"})
+(entity/add junk "item" {})
+(entity/add junk "passable" {})
+(entity/add junk "tile" {:value "%"})
+
+(def active-inventory-item (entity/new "active inventory item"))
+(entity/add active-inventory-item "inventory-active-item" {:value 0})

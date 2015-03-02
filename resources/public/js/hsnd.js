@@ -34300,9 +34300,27 @@ hsnd.entity.remove = function remove(entity, name) {
 hsnd.entity.entities_with = function entities_with(component_name) {
   return hsnd.component.entities.call(null, hsnd.component.by_name.call(null, component_name));
 };
-hsnd.entity.each = function each(component_name, func) {
-  return cljs.core.doall.call(null, cljs.core.map.call(null, func, hsnd.entity.entities_with.call(null, component_name)));
-};
+hsnd.entity.each = function() {
+  var each = null;
+  var each__1 = function(component_name) {
+    return each.call(null, component_name, cljs.core.identity);
+  };
+  var each__2 = function(component_name, func) {
+    return cljs.core.doall.call(null, cljs.core.map.call(null, func, hsnd.entity.entities_with.call(null, component_name)));
+  };
+  each = function(component_name, func) {
+    switch(arguments.length) {
+      case 1:
+        return each__1.call(this, component_name);
+      case 2:
+        return each__2.call(this, component_name, func);
+    }
+    throw new Error("Invalid arity: " + arguments.length);
+  };
+  each.cljs$core$IFn$_invoke$arity$1 = each__1;
+  each.cljs$core$IFn$_invoke$arity$2 = each__2;
+  return each;
+}();
 hsnd.entity.reduce = function reduce(component_name, func, value) {
   return cljs.core.reduce.call(null, func, value, hsnd.entity.entities_with.call(null, component_name));
 };
@@ -34351,9 +34369,9 @@ hsnd.systems.battle.handle_collision = function handle_collision(entity, other_e
   var damage_component = hsnd.entity.get.call(null, entity, "damage");
   var has_damage_QMARK_ = !(damage_component == null);
   if (player_QMARK_ && other_enemy_QMARK_ && has_damage_QMARK_) {
-    var damage_10753 = hsnd.component.get.call(null, damage_component, new cljs.core.Keyword(null, "value", "value", 305978217));
-    hsnd.systems.battle.inflict_damage.call(null, damage_10753, other_entity);
-    hsnd.systems.battle.log_damage_by_player.call(null, damage_10753, other_name);
+    var damage_11023 = hsnd.component.get.call(null, damage_component, new cljs.core.Keyword(null, "value", "value", 305978217));
+    hsnd.systems.battle.inflict_damage.call(null, damage_11023, other_entity);
+    hsnd.systems.battle.log_damage_by_player.call(null, damage_11023, other_name);
   } else {
   }
   if (enemy_QMARK_ && other_player_QMARK_ && has_damage_QMARK_) {
@@ -39888,10 +39906,10 @@ hsnd.systems.current_position.draw_player_position = function draw_player_positi
   var position_of_death = hsnd.entity.get.call(null, player, "position-of-death");
   var dead_QMARK_ = !(hsnd.entity.get.call(null, player, "dead") == null);
   var position__$1 = dead_QMARK_ ? position_of_death : position;
-  var map__10769 = hsnd.component.get_hash.call(null, position__$1);
-  var map__10769__$1 = cljs.core.seq_QMARK_.call(null, map__10769) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10769) : map__10769;
-  var x = cljs.core.get.call(null, map__10769__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10769__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11010 = hsnd.component.get_hash.call(null, position__$1);
+  var map__11010__$1 = cljs.core.seq_QMARK_.call(null, map__11010) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11010) : map__11010;
+  var x = cljs.core.get.call(null, map__11010__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__11010__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   var representation = [cljs.core.str("( "), cljs.core.str(x), cljs.core.str("; "), cljs.core.str(y), cljs.core.str(" )")].join("");
   return domina.set_text_BANG_.call(null, hsnd.systems.current_position.view, representation);
 };
@@ -39910,13 +39928,21 @@ hsnd.systems.control.init = function init() {
 hsnd.systems.control.draw = function draw() {
   return null;
 };
+hsnd.systems.control.busy_QMARK_ = function busy_QMARK_(player) {
+  return hsnd.component.get.call(null, hsnd.entity.get.call(null, player, "busy"), new cljs.core.Keyword(null, "value", "value", 305978217));
+};
 hsnd.systems.control.move = function move(key, value) {
   var components = hsnd.component.by_name.call(null, "player-controlled");
-  return cljs.core.doall.call(null, cljs.core.map.call(null, function(components) {
-    return function(p1__10882_SHARP_) {
-      return hsnd.component.set.call(null, p1__10882_SHARP_, key, value);
-    };
-  }(components), components));
+  var player = cljs.core.first.call(null, hsnd.entity.each.call(null, "player"));
+  if (cljs.core.not.call(null, hsnd.systems.control.busy_QMARK_.call(null, player))) {
+    return cljs.core.doall.call(null, cljs.core.map.call(null, function(components, player) {
+      return function(p1__11304_SHARP_) {
+        return hsnd.component.set.call(null, p1__11304_SHARP_, key, value);
+      };
+    }(components, player), components));
+  } else {
+    return null;
+  }
 };
 hsnd.systems.control.up = function up() {
   return hsnd.systems.control.move.call(null, new cljs.core.Keyword(null, "dy", "dy", 1719547243), -1);
@@ -39942,22 +39968,22 @@ hsnd.systems.control.keydown = function keydown(key_code) {
     return null;
   }
 };
-hsnd.systems.control.keyup = function keyup() {
+hsnd.systems.control.keyup = function keyup(key_code) {
   return hsnd.systems.control.stop.call(null);
 };
 hsnd.systems.control.update_entity = function update_entity(entity) {
-  var map__10885 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "player-controlled"));
-  var map__10885__$1 = cljs.core.seq_QMARK_.call(null, map__10885) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10885) : map__10885;
-  var dx = cljs.core.get.call(null, map__10885__$1, new cljs.core.Keyword(null, "dx", "dx", -381796732));
-  var dy = cljs.core.get.call(null, map__10885__$1, new cljs.core.Keyword(null, "dy", "dy", 1719547243));
+  var map__11307 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "player-controlled"));
+  var map__11307__$1 = cljs.core.seq_QMARK_.call(null, map__11307) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11307) : map__11307;
+  var dx = cljs.core.get.call(null, map__11307__$1, new cljs.core.Keyword(null, "dx", "dx", -381796732));
+  var dy = cljs.core.get.call(null, map__11307__$1, new cljs.core.Keyword(null, "dy", "dy", 1719547243));
   var position = hsnd.entity.get.call(null, entity, "position");
   if (!(position == null)) {
     var next_position = hsnd.entity.get_with_defaults.call(null, entity, "next-position", hsnd.component.get_hash.call(null, position));
     if (cljs.core.not_EQ_.call(null, 0, dx) || cljs.core.not_EQ_.call(null, 0, dy)) {
-      var map__10886 = hsnd.component.get_hash.call(null, position);
-      var map__10886__$1 = cljs.core.seq_QMARK_.call(null, map__10886) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10886) : map__10886;
-      var x = cljs.core.get.call(null, map__10886__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-      var y = cljs.core.get.call(null, map__10886__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+      var map__11308 = hsnd.component.get_hash.call(null, position);
+      var map__11308__$1 = cljs.core.seq_QMARK_.call(null, map__11308) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11308) : map__11308;
+      var x = cljs.core.get.call(null, map__11308__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+      var y = cljs.core.get.call(null, map__11308__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
       var nx = x + dx;
       var ny = y + dy;
       return hsnd.component.reset.call(null, next_position, new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), nx, new cljs.core.Keyword(null, "y", "y", -1757859776), ny], null));
@@ -39968,8 +39994,16 @@ hsnd.systems.control.update_entity = function update_entity(entity) {
     return null;
   }
 };
+hsnd.systems.control.handle_busy = function handle_busy(player) {
+  if (cljs.core.truth_(hsnd.systems.control.busy_QMARK_.call(null, player))) {
+    return hsnd.systems.control.stop.call(null);
+  } else {
+    return null;
+  }
+};
 hsnd.systems.control.update = function update() {
-  return hsnd.entity.each.call(null, "player-controlled", hsnd.systems.control.update_entity);
+  hsnd.entity.each.call(null, "player-controlled", hsnd.systems.control.update_entity);
+  return hsnd.entity.each.call(null, "player", hsnd.systems.control.handle_busy);
 };
 hsnd.systems.control.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.control.init, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.control.update, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.control.draw, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.control.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.control.keyup], 
 null);
@@ -40110,9 +40144,11 @@ hsnd.entity.add.call(null, hsnd.initial.player, "position", new cljs.core.Persis
 hsnd.entity.add.call(null, hsnd.initial.player, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "@"], null));
 hsnd.entity.add.call(null, hsnd.initial.player, "player-controlled", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "dx", "dx", -381796732), 0, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 0], null));
 hsnd.entity.add.call(null, hsnd.initial.player, "camera", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "active", "active", 1895962068), true], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "base-damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 1], null));
 hsnd.entity.add.call(null, hsnd.initial.player, "damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 1], null));
 hsnd.entity.add.call(null, hsnd.initial.player, "health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 100], null));
 hsnd.entity.add.call(null, hsnd.initial.player, "max-health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 100], null));
+hsnd.entity.add.call(null, hsnd.initial.player, "busy", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), false], null));
 hsnd.initial.rock = hsnd.entity.new$.call(null, "rock");
 hsnd.entity.add.call(null, hsnd.initial.rock, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 5, new cljs.core.Keyword(null, "y", "y", -1757859776), 5], null));
 hsnd.entity.add.call(null, hsnd.initial.rock, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "#"], null));
@@ -40136,9 +40172,32 @@ hsnd.entity.add.call(null, hsnd.initial.goblin, "sight", new cljs.core.Persisten
 hsnd.entity.add.call(null, hsnd.initial.goblin, "melee-ai", cljs.core.PersistentArrayMap.EMPTY);
 hsnd.entity.add.call(null, hsnd.initial.goblin, "health", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 7], null));
 hsnd.entity.add.call(null, hsnd.initial.goblin, "loot", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["goblin body", new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, 
-["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "~"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], null)], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["knife", new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 
-5, cljs.core.PersistentVector.EMPTY_NODE, ["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "|"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["cost", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 32], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], 
-null)], null)], null)], null)], null));
+["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "~"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], null)], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["knife", new cljs.core.PersistentVector(null, 6, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 
+5, cljs.core.PersistentVector.EMPTY_NODE, ["tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "|"], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["stats", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "damage", "damage", 970520018), 1], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["item", cljs.core.PersistentArrayMap.EMPTY], 
+null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["equippable", cljs.core.PersistentArrayMap.EMPTY], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["cost", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 32], null)], null), new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, ["passable", cljs.core.PersistentArrayMap.EMPTY], null)], null)], 
+null)], null)], null));
+hsnd.initial.small_knife = hsnd.entity.new$.call(null, "small knife");
+hsnd.entity.add.call(null, hsnd.initial.small_knife, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.small_knife, "stats", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "damage", "damage", 970520018), 2], null));
+hsnd.entity.add.call(null, hsnd.initial.small_knife, "equippable", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.small_knife, "item", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.small_knife, "passable", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.small_knife, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "|"], null));
+hsnd.initial.leather_jacket = hsnd.entity.new$.call(null, "leather jacket");
+hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "stats", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "armor", "armor", -829575337), 3], null));
+hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "equippable", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "item", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "passable", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "["], null));
+hsnd.initial.junk = hsnd.entity.new$.call(null, "some junk");
+hsnd.entity.add.call(null, hsnd.initial.junk, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.junk, "description", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "Useless junk"], null));
+hsnd.entity.add.call(null, hsnd.initial.junk, "item", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.junk, "passable", cljs.core.PersistentArrayMap.EMPTY);
+hsnd.entity.add.call(null, hsnd.initial.junk, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "%"], null));
+hsnd.initial.active_inventory_item = hsnd.entity.new$.call(null, "active inventory item");
+hsnd.entity.add.call(null, hsnd.initial.active_inventory_item, "inventory-active-item", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 0], null));
 goog.provide("hsnd.systems.camera");
 goog.require("cljs.core");
 goog.require("hsnd.entity");
@@ -40193,9 +40252,9 @@ hsnd.systems.resurrection.resurrect_at = function resurrect_at(player, stone) {
 hsnd.systems.resurrection.resurrect = function resurrect(player) {
   hsnd.entity.remove.call(null, player, "resurrection-timeout");
   hsnd.entity.remove.call(null, player, "dead");
-  var health_component_10736 = hsnd.entity.get.call(null, player, "health");
-  var max_health_10737 = hsnd.component.get.call(null, hsnd.entity.get.call(null, player, "max-health"), new cljs.core.Keyword(null, "value", "value", 305978217));
-  hsnd.component.set.call(null, health_component_10736, new cljs.core.Keyword(null, "value", "value", 305978217), max_health_10737);
+  var health_component_11013 = hsnd.entity.get.call(null, player, "health");
+  var max_health_11014 = hsnd.component.get.call(null, hsnd.entity.get.call(null, player, "max-health"), new cljs.core.Keyword(null, "value", "value", 305978217));
+  hsnd.component.set.call(null, health_component_11013, new cljs.core.Keyword(null, "value", "value", 305978217), max_health_11014);
   hsnd.entity.each.call(null, "resurrection-stone-active", cljs.core.partial.call(null, hsnd.systems.resurrection.resurrect_at, player));
   return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), "player is resurrected");
 };
@@ -40243,20 +40302,20 @@ hsnd.systems.resurrection.deflect_enemy = function deflect_enemy(stone, enemy) {
   var enemy_alive_QMARK_ = hsnd.entity.get.call(null, enemy, "dead") == null;
   if (enemy_alive_QMARK_) {
     var position = hsnd.entity.get.call(null, stone, "position");
-    var map__10741 = hsnd.component.get_hash.call(null, position);
-    var map__10741__$1 = cljs.core.seq_QMARK_.call(null, map__10741) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10741) : map__10741;
-    var x = cljs.core.get.call(null, map__10741__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-    var y = cljs.core.get.call(null, map__10741__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+    var map__11018 = hsnd.component.get_hash.call(null, position);
+    var map__11018__$1 = cljs.core.seq_QMARK_.call(null, map__11018) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11018) : map__11018;
+    var x = cljs.core.get.call(null, map__11018__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+    var y = cljs.core.get.call(null, map__11018__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
     var enemy_position = hsnd.entity.get.call(null, enemy, "position");
-    var map__10742 = hsnd.component.get_hash.call(null, enemy_position);
-    var map__10742__$1 = cljs.core.seq_QMARK_.call(null, map__10742) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10742) : map__10742;
-    var tx = cljs.core.get.call(null, map__10742__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-    var ty = cljs.core.get.call(null, map__10742__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+    var map__11019 = hsnd.component.get_hash.call(null, enemy_position);
+    var map__11019__$1 = cljs.core.seq_QMARK_.call(null, map__11019) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11019) : map__11019;
+    var tx = cljs.core.get.call(null, map__11019__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+    var ty = cljs.core.get.call(null, map__11019__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
     var enemy_next_position = hsnd.entity.get_with_defaults.call(null, enemy, "next-position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), tx, new cljs.core.Keyword(null, "y", "y", -1757859776), ty], null));
-    var map__10743 = hsnd.component.get_hash.call(null, enemy_next_position);
-    var map__10743__$1 = cljs.core.seq_QMARK_.call(null, map__10743) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10743) : map__10743;
-    var nx = cljs.core.get.call(null, map__10743__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-    var ny = cljs.core.get.call(null, map__10743__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+    var map__11020 = hsnd.component.get_hash.call(null, enemy_next_position);
+    var map__11020__$1 = cljs.core.seq_QMARK_.call(null, map__11020) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11020) : map__11020;
+    var nx = cljs.core.get.call(null, map__11020__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+    var ny = cljs.core.get.call(null, map__11020__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
     var resurrection_stone = hsnd.entity.get.call(null, stone, "resurrection-stone");
     var effect_radius = hsnd.component.get.call(null, resurrection_stone, new cljs.core.Keyword(null, "radius", "radius", -2073122258));
     var dx = hsnd.systems.resurrection.abs.call(null, x - nx);
@@ -40290,6 +40349,198 @@ hsnd.systems.resurrection.update = function update() {
 };
 hsnd.systems.resurrection.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.resurrection.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.resurrection.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.resurrection.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.resurrection.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), 
 hsnd.systems.resurrection.keyup, new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.resurrection.handle_collision], null)], null);
+goog.provide("hsnd.systems.inventory");
+goog.require("cljs.core");
+goog.require("domina.xpath");
+goog.require("domina");
+goog.require("hsnd.entity");
+goog.require("hsnd.component");
+hsnd.systems.inventory.init = function init() {
+  return null;
+};
+hsnd.systems.inventory.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.inventory.overlay_view = domina.xpath.xpath.call(null, "//div[@id\x3d'inventory-overlay']");
+hsnd.systems.inventory.list_view = domina.xpath.xpath.call(null, "//div[@id\x3d'inventory-list']");
+hsnd.systems.inventory.item_view_count = function item_view_count() {
+  return cljs.core.count.call(null, domina.nodes.call(null, domina.xpath.xpath.call(null, hsnd.systems.inventory.list_view, "p")));
+};
+hsnd.systems.inventory.list_item_view = function list_item_view(index) {
+  var i_11450 = hsnd.systems.inventory.item_view_count.call(null);
+  while (true) {
+    if (i_11450 < index) {
+      domina.append_BANG_.call(null, hsnd.systems.inventory.list_view, "\x3cp\x3e\x3cp\x3e");
+      var G__11451 = i_11450 + 1;
+      i_11450 = G__11451;
+      continue;
+    } else {
+    }
+    break;
+  }
+  return domina.xpath.xpath.call(null, hsnd.systems.inventory.list_view, [cljs.core.str("p["), cljs.core.str(index), cljs.core.str("]")].join(""));
+};
+hsnd.systems.inventory.cleanup_list_view = function cleanup_list_view(item_count) {
+  var i = hsnd.systems.inventory.item_view_count.call(null);
+  while (true) {
+    if (i > item_count) {
+      domina.set_text_BANG_.call(null, hsnd.systems.inventory.list_item_view.call(null, i), "");
+      var G__11452 = i - 1;
+      i = G__11452;
+      continue;
+    } else {
+      return null;
+    }
+    break;
+  }
+};
+hsnd.systems.inventory.inventory_active_QMARK_ = function inventory_active_QMARK_() {
+  return cljs.core.not.call(null, domina.has_class_QMARK_.call(null, hsnd.systems.inventory.overlay_view, "hide"));
+};
+hsnd.systems.inventory.toggle_inventory_overlay = function toggle_inventory_overlay() {
+  return domina.toggle_class_BANG_.call(null, hsnd.systems.inventory.overlay_view, "hide");
+};
+hsnd.systems.inventory.active_item_component = function active_item_component() {
+  return cljs.core.first.call(null, hsnd.component.by_name.call(null, "inventory-active-item"));
+};
+hsnd.systems.inventory.change_active_item_to = function change_active_item_to(old_active_index, new_active_index) {
+  domina.remove_class_BANG_.call(null, hsnd.systems.inventory.list_item_view.call(null, old_active_index), "active");
+  return domina.add_class_BANG_.call(null, hsnd.systems.inventory.list_item_view.call(null, new_active_index), "active");
+};
+hsnd.systems.inventory.change_active_item = function change_active_item(change) {
+  if (hsnd.systems.inventory.inventory_active_QMARK_.call(null)) {
+    var items = hsnd.entity.each.call(null, "in-inventory");
+    var item_count = cljs.core.count.call(null, items);
+    var active_component = hsnd.systems.inventory.active_item_component.call(null);
+    var active_item_index = hsnd.component.get.call(null, active_component, new cljs.core.Keyword(null, "value", "value", 305978217));
+    var new_index = cljs.core.mod.call(null, active_item_index - 1 + change, item_count) + 1;
+    var null_index = 0;
+    var new_index__$1 = cljs.core._EQ_.call(null, item_count, 0) ? null_index : new_index;
+    hsnd.systems.inventory.change_active_item_to.call(null, active_item_index, new_index__$1);
+    return hsnd.component.set.call(null, active_component, new cljs.core.Keyword(null, "value", "value", 305978217), new_index__$1);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.inventory.inventory_left = function inventory_left() {
+  return null;
+};
+hsnd.systems.inventory.inventory_right = function inventory_right() {
+  return null;
+};
+hsnd.systems.inventory.inventory_up = function inventory_up() {
+  return hsnd.systems.inventory.change_active_item.call(null, -1);
+};
+hsnd.systems.inventory.inventory_down = function inventory_down() {
+  return hsnd.systems.inventory.change_active_item.call(null, 1);
+};
+hsnd.systems.inventory.draw_inventory_item = function draw_inventory_item(index, item) {
+  var name = item.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177));
+  var tile = hsnd.component.get.call(null, hsnd.entity.get.call(null, item, "tile"), new cljs.core.Keyword(null, "value", "value", 305978217));
+  var equipped_QMARK_ = !(hsnd.entity.get.call(null, item, "equipped") == null);
+  var representation = equipped_QMARK_ ? [cljs.core.str(tile), cljs.core.str(" "), cljs.core.str(name), cljs.core.str(" (equipped)")].join("") : [cljs.core.str(tile), cljs.core.str(" "), cljs.core.str(name)].join("");
+  return domina.set_text_BANG_.call(null, hsnd.systems.inventory.list_item_view.call(null, index + 1), representation);
+};
+hsnd.systems.inventory.update_player_busy = function update_player_busy(player) {
+  var busy_component = hsnd.entity.get.call(null, player, "busy");
+  var busy = hsnd.systems.inventory.inventory_active_QMARK_.call(null);
+  return hsnd.component.set.call(null, busy_component, new cljs.core.Keyword(null, "value", "value", 305978217), busy);
+};
+hsnd.systems.inventory.under_player_feet_QMARK_ = function under_player_feet_QMARK_(player, item) {
+  var player_position_component = hsnd.entity.get.call(null, player, "position");
+  var player_position_QMARK_ = !(player_position_component == null);
+  var item_position_component = hsnd.entity.get.call(null, item, "position");
+  var item_position_QMARK_ = !(item_position_component == null);
+  if (player_position_QMARK_ && item_position_QMARK_) {
+    var player_position = hsnd.component.get_hash.call(null, player_position_component);
+    var item_position = hsnd.component.get_hash.call(null, item_position_component);
+    return cljs.core._EQ_.call(null, player_position, item_position);
+  } else {
+    return false;
+  }
+};
+hsnd.systems.inventory.items_under_player_feet = function items_under_player_feet(player) {
+  return cljs.core.filter.call(null, cljs.core.partial.call(null, hsnd.systems.inventory.under_player_feet_QMARK_, player), hsnd.entity.each.call(null, "item"));
+};
+hsnd.systems.inventory.pickup_item = function pickup_item(item) {
+  hsnd.entity.remove.call(null, item, "position");
+  return hsnd.entity.add.call(null, item, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
+};
+hsnd.systems.inventory.pickup_items = function pickup_items() {
+  var player = cljs.core.first.call(null, hsnd.entity.each.call(null, "player"));
+  var items = hsnd.systems.inventory.items_under_player_feet.call(null, player);
+  return cljs.core.doall.call(null, cljs.core.map.call(null, hsnd.systems.inventory.pickup_item, items));
+};
+hsnd.systems.inventory.de_equip = function de_equip(item) {
+  return hsnd.entity.remove.call(null, item, "equipped");
+};
+hsnd.systems.inventory.equip = function equip(item) {
+  return hsnd.entity.add.call(null, item, "equipped", cljs.core.PersistentArrayMap.EMPTY);
+};
+hsnd.systems.inventory.get_active_item = function get_active_item() {
+  var active_item_index = hsnd.component.get.call(null, hsnd.systems.inventory.active_item_component.call(null), new cljs.core.Keyword(null, "value", "value", 305978217)) - 1;
+  var items = cljs.core.vec.call(null, hsnd.entity.each.call(null, "in-inventory"));
+  var active_item_QMARK_ = cljs.core.contains_QMARK_.call(null, items, active_item_index);
+  if (active_item_QMARK_) {
+    return items.call(null, active_item_index);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.inventory.equip_active_item = function equip_active_item() {
+  var active_item = hsnd.systems.inventory.get_active_item.call(null);
+  if (cljs.core.truth_(active_item)) {
+    var equipped_QMARK_ = !(hsnd.entity.get.call(null, active_item, "equipped") == null);
+    var equippable_QMARK_ = !(hsnd.entity.get.call(null, active_item, "equippable") == null);
+    var action = equipped_QMARK_ ? hsnd.systems.inventory.de_equip : hsnd.systems.inventory.equip;
+    if (equippable_QMARK_) {
+      return action.call(null, active_item);
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+hsnd.systems.inventory.drop_active_item = function drop_active_item() {
+  if (hsnd.systems.inventory.inventory_active_QMARK_.call(null)) {
+    var active_item = hsnd.systems.inventory.get_active_item.call(null);
+    var player = cljs.core.first.call(null, hsnd.entity.each.call(null, "player"));
+    var player_position = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, player, "position"));
+    if (cljs.core.truth_(active_item)) {
+      hsnd.entity.remove.call(null, active_item, "equipped");
+      hsnd.entity.remove.call(null, active_item, "in-inventory");
+      return hsnd.entity.add.call(null, active_item, "position", player_position);
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+hsnd.systems.inventory.bindings = new cljs.core.PersistentArrayMap(null, 8, [73, hsnd.systems.inventory.toggle_inventory_overlay, 37, hsnd.systems.inventory.inventory_left, 39, hsnd.systems.inventory.inventory_right, 38, hsnd.systems.inventory.inventory_up, 40, hsnd.systems.inventory.inventory_down, 188, hsnd.systems.inventory.pickup_items, 69, hsnd.systems.inventory.equip_active_item, 68, hsnd.systems.inventory.drop_active_item], null);
+hsnd.systems.inventory.keyup = function keyup(key_code) {
+  if (cljs.core.contains_QMARK_.call(null, hsnd.systems.inventory.bindings, key_code)) {
+    return hsnd.systems.inventory.bindings.call(null, key_code).call(null);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.inventory.update = function update() {
+  return hsnd.entity.each.call(null, "player", hsnd.systems.inventory.update_player_busy);
+};
+hsnd.systems.inventory.draw = function draw() {
+  if (hsnd.systems.inventory.inventory_active_QMARK_.call(null)) {
+    var items = hsnd.entity.each.call(null, "in-inventory");
+    var item_count = cljs.core.count.call(null, items);
+    hsnd.systems.inventory.cleanup_list_view.call(null, item_count);
+    return cljs.core.doall.call(null, cljs.core.map_indexed.call(null, hsnd.systems.inventory.draw_inventory_item, items));
+  } else {
+    return null;
+  }
+};
+hsnd.systems.inventory.system = new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.inventory.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.inventory.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.inventory.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.inventory.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.inventory.keyup], 
+null);
 goog.provide("hsnd.systems.log");
 goog.require("cljs.core");
 goog.require("domina.xpath");
@@ -40309,9 +40560,9 @@ hsnd.systems.log.message_view = function message_view(index) {
   return domina.xpath.xpath.call(null, hsnd.systems.log.view, [cljs.core.str("p["), cljs.core.str(index + 1), cljs.core.str("]")].join(""));
 };
 hsnd.systems.log.draw_message = function draw_message(index, message_component) {
-  var map__10787 = hsnd.component.get_hash.call(null, message_component);
-  var map__10787__$1 = cljs.core.seq_QMARK_.call(null, map__10787) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10787) : map__10787;
-  var message = cljs.core.get.call(null, map__10787__$1, new cljs.core.Keyword(null, "value", "value", 305978217));
+  var map__11058 = hsnd.component.get_hash.call(null, message_component);
+  var map__11058__$1 = cljs.core.seq_QMARK_.call(null, map__11058) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11058) : map__11058;
+  var message = cljs.core.get.call(null, map__11058__$1, new cljs.core.Keyword(null, "value", "value", 305978217));
   return domina.set_text_BANG_.call(null, hsnd.systems.log.message_view.call(null, index), message);
 };
 hsnd.systems.log.rotate_logs = function rotate_logs() {
@@ -40351,33 +40602,33 @@ hsnd.systems.draw.half_height = cljs.core.quot.call(null, hsnd.systems.draw.heig
 hsnd.systems.draw.view_query = "//div[@id\x3d'main']";
 hsnd.systems.draw.view = domina.xpath.xpath.call(null, hsnd.systems.draw.view_query);
 hsnd.systems.draw.camera_boundaries = function camera_boundaries(camera_position) {
-  var map__10849 = hsnd.component.get_hash.call(null, camera_position);
-  var map__10849__$1 = cljs.core.seq_QMARK_.call(null, map__10849) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10849) : map__10849;
-  var x = cljs.core.get.call(null, map__10849__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10849__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11064 = hsnd.component.get_hash.call(null, camera_position);
+  var map__11064__$1 = cljs.core.seq_QMARK_.call(null, map__11064) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11064) : map__11064;
+  var x = cljs.core.get.call(null, map__11064__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__11064__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [x - hsnd.systems.draw.half_width, x + hsnd.systems.draw.half_width, y - hsnd.systems.draw.half_height, y + hsnd.systems.draw.half_height], null);
 };
-hsnd.systems.draw.in_boundaries_QMARK_ = function in_boundaries_QMARK_(p__10850, position) {
-  var vec__10853 = p__10850;
-  var low_x = cljs.core.nth.call(null, vec__10853, 0, null);
-  var high_x = cljs.core.nth.call(null, vec__10853, 1, null);
-  var low_y = cljs.core.nth.call(null, vec__10853, 2, null);
-  var high_y = cljs.core.nth.call(null, vec__10853, 3, null);
-  var map__10854 = hsnd.component.get_hash.call(null, position);
-  var map__10854__$1 = cljs.core.seq_QMARK_.call(null, map__10854) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10854) : map__10854;
-  var x = cljs.core.get.call(null, map__10854__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10854__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+hsnd.systems.draw.in_boundaries_QMARK_ = function in_boundaries_QMARK_(p__11065, position) {
+  var vec__11068 = p__11065;
+  var low_x = cljs.core.nth.call(null, vec__11068, 0, null);
+  var high_x = cljs.core.nth.call(null, vec__11068, 1, null);
+  var low_y = cljs.core.nth.call(null, vec__11068, 2, null);
+  var high_y = cljs.core.nth.call(null, vec__11068, 3, null);
+  var map__11069 = hsnd.component.get_hash.call(null, position);
+  var map__11069__$1 = cljs.core.seq_QMARK_.call(null, map__11069) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11069) : map__11069;
+  var x = cljs.core.get.call(null, map__11069__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__11069__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   return x > low_x && x <= high_x && y > low_y && y <= high_y;
 };
 hsnd.systems.draw.relative_position = function relative_position(camera_position, position) {
-  var map__10857 = hsnd.component.get_hash.call(null, position);
-  var map__10857__$1 = cljs.core.seq_QMARK_.call(null, map__10857) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10857) : map__10857;
-  var x = cljs.core.get.call(null, map__10857__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10857__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
-  var map__10858 = hsnd.component.get_hash.call(null, camera_position);
-  var map__10858__$1 = cljs.core.seq_QMARK_.call(null, map__10858) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10858) : map__10858;
-  var cx = cljs.core.get.call(null, map__10858__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var cy = cljs.core.get.call(null, map__10858__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11072 = hsnd.component.get_hash.call(null, position);
+  var map__11072__$1 = cljs.core.seq_QMARK_.call(null, map__11072) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11072) : map__11072;
+  var x = cljs.core.get.call(null, map__11072__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__11072__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11073 = hsnd.component.get_hash.call(null, camera_position);
+  var map__11073__$1 = cljs.core.seq_QMARK_.call(null, map__11073) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11073) : map__11073;
+  var cx = cljs.core.get.call(null, map__11073__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var cy = cljs.core.get.call(null, map__11073__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), x - cx + hsnd.systems.draw.half_width, new cljs.core.Keyword(null, "y", "y", -1757859776), y - cy + hsnd.systems.draw.half_height], null);
 };
 hsnd.systems.draw.get_row = function get_row(row) {
@@ -40390,8 +40641,8 @@ hsnd.systems.draw.init_view = function init_view() {
   while (true) {
     if (row <= hsnd.systems.draw.height) {
       domina.append_BANG_.call(null, hsnd.systems.draw.view, [cljs.core.str("\x3cp\x3e"), cljs.core.str(blank), cljs.core.str("\x3c/p\x3e")].join(""));
-      var G__10859 = row + 1;
-      row = G__10859;
+      var G__11074 = row + 1;
+      row = G__11074;
       continue;
     } else {
       return null;
@@ -40399,14 +40650,14 @@ hsnd.systems.draw.init_view = function init_view() {
     break;
   }
 };
-hsnd.systems.draw.draw_tile = function draw_tile(p__10860, p__10861, tiles) {
-  var map__10864 = p__10860;
-  var map__10864__$1 = cljs.core.seq_QMARK_.call(null, map__10864) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10864) : map__10864;
-  var x = cljs.core.get.call(null, map__10864__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10864__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
-  var map__10865 = p__10861;
-  var map__10865__$1 = cljs.core.seq_QMARK_.call(null, map__10865) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10865) : map__10865;
-  var value = cljs.core.get.call(null, map__10865__$1, new cljs.core.Keyword(null, "value", "value", 305978217));
+hsnd.systems.draw.draw_tile = function draw_tile(p__11075, p__11076, tiles) {
+  var map__11079 = p__11075;
+  var map__11079__$1 = cljs.core.seq_QMARK_.call(null, map__11079) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11079) : map__11079;
+  var x = cljs.core.get.call(null, map__11079__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__11079__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11080 = p__11076;
+  var map__11080__$1 = cljs.core.seq_QMARK_.call(null, map__11080) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11080) : map__11080;
+  var value = cljs.core.get.call(null, map__11080__$1, new cljs.core.Keyword(null, "value", "value", 305978217));
   var row = cljs.core.assoc_BANG_.call(null, tiles.call(null, y), x, value);
   return cljs.core.assoc_BANG_.call(null, tiles, y, row);
 };
@@ -40415,10 +40666,10 @@ hsnd.systems.draw.draw_empty_column = function draw_empty_column(x, _tiles) {
   var tiles = _tiles;
   while (true) {
     if (y <= hsnd.systems.draw.height) {
-      var G__10866 = y + 1;
-      var G__10867 = hsnd.systems.draw.draw_tile.call(null, new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), x, new cljs.core.Keyword(null, "y", "y", -1757859776), y], null), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "."], null), tiles);
-      y = G__10866;
-      tiles = G__10867;
+      var G__11081 = y + 1;
+      var G__11082 = hsnd.systems.draw.draw_tile.call(null, new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), x, new cljs.core.Keyword(null, "y", "y", -1757859776), y], null), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "."], null), tiles);
+      y = G__11081;
+      tiles = G__11082;
       continue;
     } else {
       return tiles;
@@ -40431,10 +40682,10 @@ hsnd.systems.draw.draw_empty = function draw_empty(_tiles) {
   var tiles = _tiles;
   while (true) {
     if (x <= hsnd.systems.draw.width) {
-      var G__10868 = x + 1;
-      var G__10869 = hsnd.systems.draw.draw_empty_column.call(null, x, tiles);
-      x = G__10868;
-      tiles = G__10869;
+      var G__11083 = x + 1;
+      var G__11084 = hsnd.systems.draw.draw_empty_column.call(null, x, tiles);
+      x = G__11083;
+      tiles = G__11084;
       continue;
     } else {
       return tiles;
@@ -40461,8 +40712,8 @@ hsnd.systems.draw.empty_tiles = function empty_tiles() {
   })));
 };
 hsnd.systems.draw.draw_tile_row = function draw_tile_row(y, row) {
-  var content = cljs.core.apply.call(null, cljs.core.str, cljs.core.map.call(null, function(p1__10870_SHARP_) {
-    return row.call(null, p1__10870_SHARP_);
+  var content = cljs.core.apply.call(null, cljs.core.str, cljs.core.map.call(null, function(p1__11085_SHARP_) {
+    return row.call(null, p1__11085_SHARP_);
   }, cljs.core.sort.call(null, cljs.core.keys.call(null, row))));
   return domina.set_text_BANG_.call(null, hsnd.systems.draw.get_row.call(null, y), content);
 };
@@ -40472,8 +40723,8 @@ hsnd.systems.draw.draw_tiles = function draw_tiles(transient_tiles) {
   while (true) {
     if (row <= hsnd.systems.draw.height) {
       hsnd.systems.draw.draw_tile_row.call(null, row, cljs.core.persistent_BANG_.call(null, tiles.call(null, row)));
-      var G__10871 = row + 1;
-      row = G__10871;
+      var G__11086 = row + 1;
+      row = G__11086;
       continue;
     } else {
       return null;
@@ -40512,8 +40763,8 @@ hsnd.systems.draw.keyup = function keyup() {
 hsnd.systems.draw.draw = function draw() {
   var tiles = hsnd.systems.draw.draw_empty.call(null, hsnd.systems.draw.empty_tiles.call(null));
   var camera = hsnd.component.entity.call(null, cljs.core.first.call(null, cljs.core.filter.call(null, function(tiles) {
-    return function(p1__10872_SHARP_) {
-      return cljs.core._EQ_.call(null, true, hsnd.component.get.call(null, p1__10872_SHARP_, new cljs.core.Keyword(null, "active", "active", 1895962068)));
+    return function(p1__11087_SHARP_) {
+      return cljs.core._EQ_.call(null, true, hsnd.component.get.call(null, p1__11087_SHARP_, new cljs.core.Keyword(null, "active", "active", 1895962068)));
     };
   }(tiles), hsnd.component.by_name.call(null, "camera"))));
   var tiles_with_passable = hsnd.entity.reduce.call(null, "tile", cljs.core.partial.call(null, hsnd.systems.draw.draw_step_for_passable, camera), tiles);
@@ -40540,16 +40791,16 @@ hsnd.systems.loot.keyup = function keyup() {
 hsnd.systems.loot.update = function update() {
   return null;
 };
-hsnd.systems.loot.add_component_to_drop = function add_component_to_drop(drop, p__10778) {
-  var vec__10780 = p__10778;
-  var name = cljs.core.nth.call(null, vec__10780, 0, null);
-  var hash = cljs.core.nth.call(null, vec__10780, 1, null);
+hsnd.systems.loot.add_component_to_drop = function add_component_to_drop(drop, p__11049) {
+  var vec__11051 = p__11049;
+  var name = cljs.core.nth.call(null, vec__11051, 0, null);
+  var hash = cljs.core.nth.call(null, vec__11051, 1, null);
   return hsnd.entity.add.call(null, drop, name, hash);
 };
-hsnd.systems.loot.handle_one_drop = function handle_one_drop(position, dropped_by, p__10781) {
-  var vec__10783 = p__10781;
-  var name = cljs.core.nth.call(null, vec__10783, 0, null);
-  var components = cljs.core.nth.call(null, vec__10783, 1, null);
+hsnd.systems.loot.handle_one_drop = function handle_one_drop(position, dropped_by, p__11052) {
+  var vec__11054 = p__11052;
+  var name = cljs.core.nth.call(null, vec__11054, 0, null);
+  var components = cljs.core.nth.call(null, vec__11054, 1, null);
   var drop = hsnd.entity.new$.call(null, name);
   hsnd.entity.add.call(null, drop, "position", position);
   hsnd.entity.add.call(null, drop, "dropped-by", dropped_by);
@@ -41438,14 +41689,14 @@ hsnd.systems.melee_ai.next_move = function next_move(its_position, target_positi
 hsnd.systems.melee_ai.chase = function chase(entity, player) {
   var its_position = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "position"));
   var player_position = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, player, "position"));
-  var map__10574 = hsnd.systems.melee_ai.next_move.call(null, its_position, player_position);
-  var map__10574__$1 = cljs.core.seq_QMARK_.call(null, map__10574) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10574) : map__10574;
-  var dx = cljs.core.get.call(null, map__10574__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var dy = cljs.core.get.call(null, map__10574__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
-  var map__10575 = its_position;
-  var map__10575__$1 = cljs.core.seq_QMARK_.call(null, map__10575) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10575) : map__10575;
-  var x = cljs.core.get.call(null, map__10575__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10575__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11041 = hsnd.systems.melee_ai.next_move.call(null, its_position, player_position);
+  var map__11041__$1 = cljs.core.seq_QMARK_.call(null, map__11041) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11041) : map__11041;
+  var dx = cljs.core.get.call(null, map__11041__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var dy = cljs.core.get.call(null, map__11041__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11042 = its_position;
+  var map__11042__$1 = cljs.core.seq_QMARK_.call(null, map__11042) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11042) : map__11042;
+  var x = cljs.core.get.call(null, map__11042__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__11042__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   var nx = x + dx;
   var ny = y + dy;
   var next_position_hash = new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), nx, new cljs.core.Keyword(null, "y", "y", -1757859776), ny], null);
@@ -41453,14 +41704,14 @@ hsnd.systems.melee_ai.chase = function chase(entity, player) {
   return hsnd.component.reset.call(null, next_position, next_position_hash);
 };
 hsnd.systems.melee_ai.in_sight_QMARK_ = function in_sight_QMARK_(entity, player) {
-  var map__10578 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "position"));
-  var map__10578__$1 = cljs.core.seq_QMARK_.call(null, map__10578) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10578) : map__10578;
-  var x = cljs.core.get.call(null, map__10578__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var y = cljs.core.get.call(null, map__10578__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
-  var map__10579 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, player, "position"));
-  var map__10579__$1 = cljs.core.seq_QMARK_.call(null, map__10579) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10579) : map__10579;
-  var tx = cljs.core.get.call(null, map__10579__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
-  var ty = cljs.core.get.call(null, map__10579__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11045 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, entity, "position"));
+  var map__11045__$1 = cljs.core.seq_QMARK_.call(null, map__11045) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11045) : map__11045;
+  var x = cljs.core.get.call(null, map__11045__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var y = cljs.core.get.call(null, map__11045__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
+  var map__11046 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, player, "position"));
+  var map__11046__$1 = cljs.core.seq_QMARK_.call(null, map__11046) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11046) : map__11046;
+  var tx = cljs.core.get.call(null, map__11046__$1, new cljs.core.Keyword(null, "x", "x", 2099068185));
+  var ty = cljs.core.get.call(null, map__11046__$1, new cljs.core.Keyword(null, "y", "y", -1757859776));
   var dx = hsnd.systems.melee_ai.abs.call(null, x - tx);
   var dy = hsnd.systems.melee_ai.abs.call(null, y - ty);
   var sight_radius = hsnd.component.get.call(null, hsnd.entity.get.call(null, entity, "sight"), new cljs.core.Keyword(null, "radius", "radius", -2073122258));
@@ -41533,13 +41784,15 @@ goog.require("hsnd.systems.current_position");
 goog.require("hsnd.systems.control");
 goog.require("hsnd.systems.movement");
 goog.require("hsnd.systems.melee_ai");
+goog.require("hsnd.systems.inventory");
 goog.require("hsnd.initial");
 goog.require("domina.events");
 hsnd.core.fps = 60;
 hsnd.core.interval = 1E3 / hsnd.core.fps;
-hsnd.core.systems = new cljs.core.PersistentVector(null, 13, 5, cljs.core.PersistentVector.EMPTY_NODE, [hsnd.systems.draw.system, hsnd.systems.current_position.system, hsnd.systems.stats.system, hsnd.systems.control.system, hsnd.systems.collision.system, hsnd.systems.resurrection.system, hsnd.systems.movement.system, hsnd.systems.blocked.system, hsnd.systems.battle.system, hsnd.systems.death.system, hsnd.systems.loot.system, hsnd.systems.melee_ai.system, hsnd.systems.log.system], null);
-cljs.core.doall.call(null, cljs.core.map.call(null, function(p1__10752_SHARP_) {
-  return p1__10752_SHARP_.call(null, new cljs.core.Keyword(null, "init", "init", -1875481434)).call(null);
+hsnd.core.systems = new cljs.core.PersistentVector(null, 14, 5, cljs.core.PersistentVector.EMPTY_NODE, [hsnd.systems.draw.system, hsnd.systems.current_position.system, hsnd.systems.stats.system, hsnd.systems.control.system, hsnd.systems.inventory.system, hsnd.systems.collision.system, hsnd.systems.resurrection.system, hsnd.systems.movement.system, hsnd.systems.blocked.system, hsnd.systems.battle.system, hsnd.systems.death.system, hsnd.systems.loot.system, hsnd.systems.melee_ai.system, hsnd.systems.log.system], 
+null);
+cljs.core.doall.call(null, cljs.core.map.call(null, function(p1__10862_SHARP_) {
+  return p1__10862_SHARP_.call(null, new cljs.core.Keyword(null, "init", "init", -1875481434)).call(null);
 }, hsnd.core.systems));
 cljs.core.doall.call(null, cljs.core.map.call(null, function(system) {
   if (cljs.core.contains_QMARK_.call(null, system, new cljs.core.Keyword(null, "listeners", "listeners", 394544445))) {
@@ -41548,25 +41801,25 @@ cljs.core.doall.call(null, cljs.core.map.call(null, function(system) {
     return null;
   }
 }, hsnd.core.systems));
-hsnd.core.run = function run(p__10753) {
-  var map__10755 = p__10753;
-  var map__10755__$1 = cljs.core.seq_QMARK_.call(null, map__10755) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10755) : map__10755;
-  var update = cljs.core.get.call(null, map__10755__$1, new cljs.core.Keyword(null, "update", "update", 1045576396));
-  var draw = cljs.core.get.call(null, map__10755__$1, new cljs.core.Keyword(null, "draw", "draw", 1358331674));
+hsnd.core.run = function run(p__10863) {
+  var map__10865 = p__10863;
+  var map__10865__$1 = cljs.core.seq_QMARK_.call(null, map__10865) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10865) : map__10865;
+  var update = cljs.core.get.call(null, map__10865__$1, new cljs.core.Keyword(null, "update", "update", 1045576396));
+  var draw = cljs.core.get.call(null, map__10865__$1, new cljs.core.Keyword(null, "draw", "draw", 1358331674));
   update.call(null);
   return draw.call(null);
 };
-hsnd.core.keydown = function keydown(key_code, p__10756) {
-  var map__10758 = p__10756;
-  var map__10758__$1 = cljs.core.seq_QMARK_.call(null, map__10758) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10758) : map__10758;
-  var keydown__$1 = cljs.core.get.call(null, map__10758__$1, new cljs.core.Keyword(null, "keydown", "keydown", -629268186));
+hsnd.core.keydown = function keydown(key_code, p__10866) {
+  var map__10868 = p__10866;
+  var map__10868__$1 = cljs.core.seq_QMARK_.call(null, map__10868) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10868) : map__10868;
+  var keydown__$1 = cljs.core.get.call(null, map__10868__$1, new cljs.core.Keyword(null, "keydown", "keydown", -629268186));
   return keydown__$1.call(null, key_code);
 };
-hsnd.core.keyup = function keyup(p__10759) {
-  var map__10761 = p__10759;
-  var map__10761__$1 = cljs.core.seq_QMARK_.call(null, map__10761) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10761) : map__10761;
-  var keyup__$1 = cljs.core.get.call(null, map__10761__$1, new cljs.core.Keyword(null, "keyup", "keyup", -794526927));
-  return keyup__$1.call(null);
+hsnd.core.keyup = function keyup(key_code, p__10869) {
+  var map__10871 = p__10869;
+  var map__10871__$1 = cljs.core.seq_QMARK_.call(null, map__10871) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10871) : map__10871;
+  var keyup__$1 = cljs.core.get.call(null, map__10871__$1, new cljs.core.Keyword(null, "keyup", "keyup", -794526927));
+  return keyup__$1.call(null, key_code);
 };
 hsnd.core.run_all = function run_all(func) {
   return cljs.core.doall.call(null, cljs.core.map.call(null, func, hsnd.core.systems));
@@ -41579,7 +41832,8 @@ hsnd.core.handle_keydown = function handle_keydown(event) {
   return hsnd.core.run_all.call(null, cljs.core.partial.call(null, hsnd.core.keydown, key_code));
 };
 hsnd.core.handle_keyup = function handle_keyup(event) {
-  return hsnd.core.run_all.call(null, hsnd.core.keyup);
+  var key_code = (new cljs.core.Keyword(null, "keyCode", "keyCode", 1964303637)).cljs$core$IFn$_invoke$arity$1(event);
+  return hsnd.core.run_all.call(null, cljs.core.partial.call(null, hsnd.core.keyup, key_code));
 };
 setInterval(hsnd.core.handle_frame, hsnd.core.interval);
 domina.events.listen_BANG_.call(null, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.core.handle_keydown);

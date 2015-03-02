@@ -1,5 +1,6 @@
 body {
     margin-top: 0;
+    overflow: hidden;
 }
 
 #main {
@@ -30,4 +31,30 @@ body {
     height: 15em;
     width: 100%;
     overflow-y: auto;
+}
+
+#inventory-overlay {
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: white;
+    width: 27em;
+    height: 20em;
+    padding-left: 1em;
+    padding-top: 0.5em;
+    overflow-y: auto;
+}
+
+.hide {
+    display: none;
+}
+
+#inventory-list > p {
+    font-family: monospace;
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+
+#inventory-list > p.active {
+    font-weight: bold;
 }

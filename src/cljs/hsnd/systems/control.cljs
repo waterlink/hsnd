@@ -6,10 +6,16 @@
 
 (defn draw [] nil)
 
+(defn busy?
+  [player]
+  (-> (entity/get player "busy") (component/get :value)))
+
 (defn move
   [key value]
-  (let [components (component/by-name "player-controlled")]
-    (doall (map #(component/set % key value) components))))
+  (let [components (component/by-name "player-controlled")
+        player (first (entity/each "player"))]
+    (if (not (busy? player))
+      (doall (map #(component/set % key value) components)))))
 
 (defn up [] (move :dy -1))
 (defn left [] (move :dx -1))
@@ -28,7 +34,7 @@
     ((controls key-code))))
 
 (defn keyup
-  []
+  [key-code]
   (stop))
 
 (defn update-entity
@@ -46,9 +52,15 @@
                 ny (+ y dy)]
             (component/reset next-position {:x nx :y ny})))))))
 
+(defn handle-busy
+  [player]
+  (if (busy? player)
+    (stop)))
+
 (defn update
   []
-  (entity/each "player-controlled" update-entity))
+  (entity/each "player-controlled" update-entity)
+  (entity/each "player" handle-busy))
 
 (def system {:init init
              :update update

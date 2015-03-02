@@ -39,8 +39,9 @@
   (component/entities (component/by-name component-name)))
 
 (defn each
-  [component-name func]
-  (doall (map func (entities-with component-name))))
+  ([component-name] (each component-name identity))
+  ([component-name func]
+   (doall (map func (entities-with component-name)))))
 
 (defn reduce
   [component-name func value]

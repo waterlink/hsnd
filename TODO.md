@@ -48,5 +48,14 @@
   - [x] Show resurrection countdown
 
 - [ ] Inventory:
-  - [ ] Player can pickup items
-  - [ ] Item list is shown in sidebar
+  - [x] Some example items already in inventory
+  - [x] Inventory overlay blocks player controls
+  - [x] Inventory overlay lists items
+  - [x] Inventory overlay allows to navigate items with arrows (up and down)
+  - [x] Player can pickup items with , key
+  - [x] Inventory overlay allows to equip and de-equip equippable items (with e key)
+  - [ ] Equipped items are put in slots, equipping to the same slot will de-equip previous item
+  - [x] Inventory overlay allows to drop items (with d key)
+  - [ ] Item details can be shown with right arrow, left arrow returns to the list
+  - [ ] Picking up emits log message
+  - [ ] Dropping emits log message

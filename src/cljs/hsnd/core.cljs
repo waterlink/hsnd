@@ -9,6 +9,7 @@
             [hsnd.systems.death :as death]
             [hsnd.systems.resurrection :as resurrection]
             [hsnd.systems.loot :as loot]
+            [hsnd.systems.inventory :as inventory]
             [hsnd.systems.melee-ai :as melee-ai]
             [hsnd.systems.current-position :as current-position]
             [hsnd.systems.log :as log]
@@ -23,6 +24,7 @@
               current-position/system
               stats/system
               control/system
+              inventory/system
               collision/system
               resurrection/system
               movement/system
@@ -53,8 +55,8 @@
   (keydown key-code))
 
 (defn- keyup
-  [{keyup :keyup}]
-  (keyup))
+  [key-code {keyup :keyup}]
+  (keyup key-code))
 
 (defn- run-all [func] (doall (map func systems)))
 
@@ -69,7 +71,8 @@
 
 (defn- handle-keyup
   [event]
-  (run-all keyup))
+  (let [key-code (:keyCode event)]
+    (run-all (partial keyup key-code))))
 
 (js/setInterval handle-frame interval)
 (events/listen! :keydown handle-keydown)
