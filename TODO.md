@@ -59,3 +59,24 @@
   - [ ] Item details can be shown with right arrow, left arrow returns to the list
   - [ ] Picking up emits log message
   - [ ] Dropping emits log message
+
+- [ ] Stats:
+  - [ ] base stat: strength = 1 from start
+  - [ ] base stat: endurance = 1 from start
+  - [ ] base damage = strength
+  - [ ] damage modifier = (strength div 14) * 0.1
+  - [ ] damage = (base damage + items accumulated damage) * (1 + damage modifier)
+  - [ ] base armor = endurance
+  - [ ] armor modifier = (endurance div 14) * 0.1
+  - [ ] armor = (base armor + items accumulated armor) * (1 + armor modifier)
+  - [ ] base health = strength * 35 + endurance * 65
+  - [ ] health modifier = ((endurance + strength) / 14) * 0.1
+  - [ ] max health = (base health + items health bonus) * (1 + health modifier)
+  - [ ] Battle system uses armor to calculate damage
+  - [ ] base regen = 1 + (endurance div 5)
+  - [ ] regen = (base regen + items regen)
+  - [ ] Regeneration system regenerates health up to max health based on regen stat
+
+- [ ] XP:
+  - [ ] xp stat: 0/10, geometric progression with k=1.3
+  - [ ] level up overlay - allows to ditribute 2 base stat per level
