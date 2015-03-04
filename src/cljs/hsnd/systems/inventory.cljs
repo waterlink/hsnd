@@ -116,13 +116,22 @@
         items (items-under-player-feet player)]
     (doall (map pickup-item items))))
 
+(defn- equipped-in-slot-for
+  [item]
+  (let [{slot :slot} (-> (entity/get item "equippable") (component/get-hash))]
+    (str "equipped-in-slot:" slot)))
+
 (defn- de-equip
   [item]
+  (entity/remove item (equipped-in-slot-for item))
   (entity/remove item "equipped"))
 
 (defn- equip
   [item]
-  (entity/add item "equipped" {}))
+  (let [equipped-in-slot (equipped-in-slot-for item)]
+    (entity/each equipped-in-slot de-equip)
+    (entity/add item "equipped" {})
+    (entity/add item equipped-in-slot)))
 
 (defn- get-active-item
   []

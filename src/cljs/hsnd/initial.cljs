@@ -47,14 +47,14 @@
                              [["tile" {:value "|"}]
                               ["stats" {:damage 1}]
                               ["item" {}]
-                              ["equippable" {}]
+                              ["equippable" {:slot "weapon"}]
                               ["cost" {:value 32}]
                               ["passable" {}]]]]})
 
 (def small-knife (entity/new "small knife"))
 (entity/add small-knife "in-inventory" {})
 (entity/add small-knife "stats" {:damage 2})
-(entity/add small-knife "equippable" {})
+(entity/add small-knife "equippable" {:slot "weapon"})
 (entity/add small-knife "item" {})
 (entity/add small-knife "passable" {})
 (entity/add small-knife "tile" {:value "|"})
@@ -62,7 +62,7 @@
 (def leather-jacket (entity/new "leather jacket"))
 (entity/add leather-jacket "in-inventory" {})
 (entity/add leather-jacket "stats" {:armor 3})
-(entity/add leather-jacket "equippable" {})
+(entity/add leather-jacket "equippable" {:slot "chest"})
 (entity/add leather-jacket "item" {})
 (entity/add leather-jacket "passable" {})
 (entity/add leather-jacket "tile" {:value "["})
