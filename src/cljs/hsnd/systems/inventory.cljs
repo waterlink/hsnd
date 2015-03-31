@@ -14,23 +14,31 @@
   []
   (count (dom/nodes (xpath/xpath list-view "p"))))
 
-(defn- list-item-view
-  [index]
-  (loop [i (item-view-count)]
+(defn- generic-list-view
+  [current-count view index]
+  (loop [i current-count]
     (if (-> i (< index))
       (do
-        (dom/append! list-view "<p><p>")
+        (dom/append! view "<p><p>")
         (recur (inc i)))))
-  (xpath/xpath list-view (str "p[" index "]")))
+  (xpath/xpath view (str "p[" index "]")))
+
+(defn- generic-list-cleanup
+  [current-count item-view-fn new-count]
+  (loop [i current-count]
+    (if (-> i (> new-count))
+      (do
+        (-> (item-view-fn i)
+            (dom/set-text! ""))
+        (recur (dec i))))))
+
+(defn- list-item-view
+  [index]
+  (generic-list-view (item-view-count) list-view index))
 
 (defn- cleanup-list-view
   [item-count]
-  (loop [i (item-view-count)]
-    (if (-> i (> item-count))
-      (do
-        (-> (list-item-view i)
-            (dom/set-text! ""))
-        (recur (dec i))))))
+  (generic-list-cleanup (item-view-count) list-item-view item-count))
 
 (defn- inventory-active?
   []
