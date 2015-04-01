@@ -79,4 +79,4 @@
 
 - [ ] XP:
   - [ ] xp stat: 0/10, geometric progression with k=1.3
-  - [ ] level up overlay - allows to ditribute 2 base stat per level
+  - [ ] level up overlay - allows to distribute 2 base stat per level
