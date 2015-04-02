@@ -7,12 +7,27 @@
 (defn init [] nil)
 (defn keydown [] nil)
 
-(def overlay-view (xpath/xpath "//div[@id='inventory-overlay']"))
-(def list-view (xpath/xpath "//div[@id='inventory-list']"))
+(defn- by-id [id] (xpath/xpath (str "//div[@id='" id "']")))
+
+(def overlay-view (by-id "inventory-overlay"))
+(def list-view (by-id "inventory-list"))
+
+(def details-view (by-id "item-details-overlay"))
+(def details-name-view (by-id "item-details-name"))
+(def details-description-view (by-id "item-details-description"))
+(def stat-list-view (by-id "item-details-stats"))
+
+(defn- view-count
+  [view selector]
+  (count (dom/nodes (xpath/xpath view selector))))
 
 (defn- item-view-count
   []
-  (count (dom/nodes (xpath/xpath list-view "p"))))
+  (view-count list-view "p"))
+
+(defn- item-details-stats-view-count
+  []
+  (view-count stat-list-view "p"))
 
 (defn- generic-list-view
   [current-count view index]
@@ -36,17 +51,37 @@
   [index]
   (generic-list-view (item-view-count) list-view index))
 
+(defn- list-stat-view
+  [index]
+  (generic-list-view (item-details-stats-view-count) stat-list-view index))
+
 (defn- cleanup-list-view
   [item-count]
   (generic-list-cleanup (item-view-count) list-item-view item-count))
+
+(defn- cleanup-stats-view
+  [item-count]
+  (generic-list-cleanup (item-details-stats-view-count) list-stat-view item-count))
 
 (defn- inventory-active?
   []
   (not (dom/has-class? overlay-view "hide")))
 
+(defn- details-active?
+  []
+  (not (dom/has-class? details-view "hide")))
+
 (defn- toggle-inventory-overlay
   []
   (dom/toggle-class! overlay-view "hide"))
+
+(defn- show-active-item-details
+  []
+  (dom/remove-class! details-view "hide"))
+
+(defn- back-to-inventory
+  []
+  (dom/add-class! details-view "hide"))
 
 (defn- active-item-component
   []
@@ -72,23 +107,69 @@
       (change-active-item-to active-item-index new-index)
       (component/set active-component :value new-index))))
 
-(defn- inventory-left [] nil)
-(defn- inventory-right [] nil)
+(defn- inventory-left [] (back-to-inventory))
+
+(defn- inventory-right [] (show-active-item-details))
 
 (defn- inventory-up [] (change-active-item (- 1)))
 
 (defn- inventory-down [] (change-active-item (+ 1)))
 
-(defn- draw-inventory-item
-  [index item]
+(defn- get-active-item
+  []
+  (let [active-item-index (dec (component/get (active-item-component) :value))
+        items (vec (entity/each "in-inventory"))
+        active-item? (contains? items active-item-index)]
+    (if active-item?
+      (items active-item-index)
+      nil)))
+
+(defn- item-representation
+  [item]
   (let [name (item :name)
         tile (-> (entity/get item "tile") (component/get :value))
         equipped? (not (nil? (entity/get item "equipped")))
         representation (if equipped?
                          (str tile " " name " (equipped)")
                          (str tile " " name))]
-    (-> (list-item-view (inc index))
-        (dom/set-text! representation))))
+    representation))
+
+(defn- stat-representation
+  [[stat-name stat-effect]]
+  (let [effect (if (-> stat-effect (> 0))
+                 (str "+" stat-effect)
+                 (str stat-effect))]
+    (str effect " " (name stat-name))))
+
+(defn- draw-inventory-item
+  [index item]
+  (-> (list-item-view (inc index))
+      (dom/set-text! (item-representation item))))
+
+(defn- draw-details-one-stat
+  [index stat]
+  (-> (list-stat-view (inc index))
+      (dom/set-text! (stat-representation stat))))
+
+(defn- draw-details-stats
+  [stats]
+  (cleanup-stats-view (count stats))
+  (doall
+   (map-indexed draw-details-one-stat stats)))
+
+(defn- draw-item-details
+  []
+  (let [item (get-active-item)
+        item? (not (nil? item))]
+    (when item?
+      (let [name (item-representation item)
+            description (-> (entity/get-with-defaults item "description" {:value "No description"})
+                            (component/get :value))
+            stats (-> (entity/get-with-defaults item "stats" {})
+                      (component/get-hash))]
+        (dom/set-text! details-name-view name)
+        (dom/set-text! details-description-view description)
+        (draw-details-stats stats)))))
 
 (defn- update-player-busy
   [player]
@@ -139,16 +220,7 @@
   (let [equipped-in-slot (equipped-in-slot-for item)]
     (entity/each equipped-in-slot de-equip)
     (entity/add item "equipped" {})
-    (entity/add item equipped-in-slot)))
-
-(defn- get-active-item
-  []
-  (let [active-item-index (dec (component/get (active-item-component) :value))
-        items (vec (entity/each "in-inventory"))
-        active-item? (contains? items active-item-index)]
-    (if active-item?
-      (items active-item-index)
-      nil)))
+    (entity/add item equipped-in-slot {})))
 
 (defn- equip-active-item
   []
@@ -192,12 +264,14 @@
 
 (defn draw
   []
-  (if (inventory-active?)
+  (when (inventory-active?)
     (let [items (entity/each "in-inventory")
           item-count (count items)]
       (cleanup-list-view item-count)
       (doall
-       (map-indexed draw-inventory-item items)))))
+       (map-indexed draw-inventory-item items)))
+    (when (details-active?)
+      (draw-item-details))))
 
 (def system {:init init
              :draw draw

@@ -56,7 +56,7 @@
   - [x] Inventory overlay allows to equip and de-equip equippable items (with e key)
   - [x] Equipped items are put in slots, equipping to the same slot will de-equip previous item
   - [x] Inventory overlay allows to drop items (with d key)
-  - [ ] Item details can be shown with right arrow, left arrow returns to the list
+  - [x] Item details can be shown with right arrow, left arrow returns to the list
   - [ ] Equipping/de-equipping emits a log message
   - [ ] Picking/Dropping up emits log message
 

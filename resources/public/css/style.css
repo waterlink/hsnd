@@ -33,7 +33,7 @@ body {
     overflow-y: auto;
 }
 
-#inventory-overlay {
+.overlay {
     position: fixed;
     left: 0;
     top: 0;
@@ -45,11 +45,16 @@ body {
     overflow-y: auto;
 }
 
+#inventory-overlay {}
+#item-details-overlay {}
+
 .hide {
     display: none;
 }
 
-#inventory-list > p {
+#inventory-list > p,
+#item-details-name,
+#item-details-stats > p {
     font-family: monospace;
     margin-top: 1px;
     margin-bottom: 1px;
