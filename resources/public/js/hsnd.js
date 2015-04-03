@@ -40351,9 +40351,10 @@ hsnd.systems.resurrection.system = new cljs.core.PersistentArrayMap(null, 6, [ne
 hsnd.systems.resurrection.keyup, new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.resurrection.handle_collision], null)], null);
 goog.provide("hsnd.systems.inventory");
 goog.require("cljs.core");
-goog.require("domina.xpath");
-goog.require("domina");
 goog.require("hsnd.entity");
+goog.require("hsnd.callback");
+goog.require("domina");
+goog.require("domina.xpath");
 goog.require("hsnd.component");
 hsnd.systems.inventory.init = function init() {
   return null;
@@ -40380,12 +40381,12 @@ hsnd.systems.inventory.item_details_stats_view_count = function item_details_sta
   return hsnd.systems.inventory.view_count.call(null, hsnd.systems.inventory.stat_list_view, "p");
 };
 hsnd.systems.inventory.generic_list_view = function generic_list_view(current_count, view, index) {
-  var i_10904 = current_count;
+  var i_11034 = current_count;
   while (true) {
-    if (i_10904 < index) {
+    if (i_11034 < index) {
       domina.append_BANG_.call(null, view, "\x3cp\x3e\x3cp\x3e");
-      var G__10905 = i_10904 + 1;
-      i_10904 = G__10905;
+      var G__11035 = i_11034 + 1;
+      i_11034 = G__11035;
       continue;
     } else {
     }
@@ -40398,8 +40399,8 @@ hsnd.systems.inventory.generic_list_cleanup = function generic_list_cleanup(curr
   while (true) {
     if (i > new_count) {
       domina.set_text_BANG_.call(null, item_view_fn.call(null, i), "");
-      var G__10906 = i - 1;
-      i = G__10906;
+      var G__11036 = i - 1;
+      i = G__11036;
       continue;
     } else {
       return null;
@@ -40485,10 +40486,10 @@ hsnd.systems.inventory.item_representation = function item_representation(item) 
   var representation = equipped_QMARK_ ? [cljs.core.str(tile), cljs.core.str(" "), cljs.core.str(name), cljs.core.str(" (equipped)")].join("") : [cljs.core.str(tile), cljs.core.str(" "), cljs.core.str(name)].join("");
   return representation;
 };
-hsnd.systems.inventory.stat_representation = function stat_representation(p__10907) {
-  var vec__10909 = p__10907;
-  var stat_name = cljs.core.nth.call(null, vec__10909, 0, null);
-  var stat_effect = cljs.core.nth.call(null, vec__10909, 1, null);
+hsnd.systems.inventory.stat_representation = function stat_representation(p__11037) {
+  var vec__11039 = p__11037;
+  var stat_name = cljs.core.nth.call(null, vec__11039, 0, null);
+  var stat_effect = cljs.core.nth.call(null, vec__11039, 1, null);
   var effect = stat_effect > 0 ? [cljs.core.str("+"), cljs.core.str(stat_effect)].join("") : [cljs.core.str(stat_effect)].join("");
   return[cljs.core.str(effect), cljs.core.str(" "), cljs.core.str(cljs.core.name.call(null, stat_name))].join("");
 };
@@ -40547,17 +40548,19 @@ hsnd.systems.inventory.pickup_items = function pickup_items() {
   return cljs.core.doall.call(null, cljs.core.map.call(null, hsnd.systems.inventory.pickup_item, items));
 };
 hsnd.systems.inventory.equipped_in_slot_for = function equipped_in_slot_for(item) {
-  var map__10911 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, item, "equippable"));
-  var map__10911__$1 = cljs.core.seq_QMARK_.call(null, map__10911) ? cljs.core.apply.call(null, cljs.core.hash_map, map__10911) : map__10911;
-  var slot = cljs.core.get.call(null, map__10911__$1, new cljs.core.Keyword(null, "slot", "slot", 240229571));
+  var map__11041 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, item, "equippable"));
+  var map__11041__$1 = cljs.core.seq_QMARK_.call(null, map__11041) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11041) : map__11041;
+  var slot = cljs.core.get.call(null, map__11041__$1, new cljs.core.Keyword(null, "slot", "slot", 240229571));
   return[cljs.core.str("equipped-in-slot:"), cljs.core.str(slot)].join("");
 };
 hsnd.systems.inventory.de_equip = function de_equip(item) {
   hsnd.entity.remove.call(null, item, hsnd.systems.inventory.equipped_in_slot_for.call(null, item));
-  return hsnd.entity.remove.call(null, item, "equipped");
+  hsnd.entity.remove.call(null, item, "equipped");
+  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(hsnd.systems.inventory.item_representation.call(null, item)), cljs.core.str(" unequipped")].join(""));
 };
 hsnd.systems.inventory.equip = function equip(item) {
   var equipped_in_slot = hsnd.systems.inventory.equipped_in_slot_for.call(null, item);
+  hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(hsnd.systems.inventory.item_representation.call(null, item)), cljs.core.str(" equipped")].join(""));
   hsnd.entity.each.call(null, equipped_in_slot, hsnd.systems.inventory.de_equip);
   hsnd.entity.add.call(null, item, "equipped", cljs.core.PersistentArrayMap.EMPTY);
   return hsnd.entity.add.call(null, item, equipped_in_slot, cljs.core.PersistentArrayMap.EMPTY);
@@ -40606,10 +40609,10 @@ hsnd.systems.inventory.update = function update() {
 };
 hsnd.systems.inventory.draw = function draw() {
   if (hsnd.systems.inventory.inventory_active_QMARK_.call(null)) {
-    var items_10912 = hsnd.entity.each.call(null, "in-inventory");
-    var item_count_10913 = cljs.core.count.call(null, items_10912);
-    hsnd.systems.inventory.cleanup_list_view.call(null, item_count_10913);
-    cljs.core.doall.call(null, cljs.core.map_indexed.call(null, hsnd.systems.inventory.draw_inventory_item, items_10912));
+    var items_11042 = hsnd.entity.each.call(null, "in-inventory");
+    var item_count_11043 = cljs.core.count.call(null, items_11042);
+    hsnd.systems.inventory.cleanup_list_view.call(null, item_count_11043);
+    cljs.core.doall.call(null, cljs.core.map_indexed.call(null, hsnd.systems.inventory.draw_inventory_item, items_11042));
     if (hsnd.systems.inventory.details_active_QMARK_.call(null)) {
       return hsnd.systems.inventory.draw_item_details.call(null);
     } else {

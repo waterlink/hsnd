@@ -1,6 +1,7 @@
 (ns hsnd.systems.inventory
   (:require [hsnd.component :as component]
             [hsnd.entity :as entity]
+            [hsnd.callback :as callback]
             [domina :as dom]
             [domina.xpath :as xpath]))
 
@@ -213,11 +214,15 @@
 (defn- de-equip
   [item]
   (entity/remove item (equipped-in-slot-for item))
-  (entity/remove item "equipped"))
+  (entity/remove item "equipped")
+  (callback/emit :log-message
+                 (str (item-representation item) " unequipped")))
 
 (defn- equip
   [item]
   (let [equipped-in-slot (equipped-in-slot-for item)]
+    (callback/emit :log-message
+                   (str (item-representation item) " equipped"))
     (entity/each equipped-in-slot de-equip)
     (entity/add item "equipped" {})
     (entity/add item equipped-in-slot {})))
