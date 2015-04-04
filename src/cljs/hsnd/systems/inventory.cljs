@@ -198,7 +198,9 @@
 (defn- pickup-item
   [item]
   (entity/remove item "position")
-  (entity/add item "in-inventory" {}))
+  (entity/add item "in-inventory" {})
+  (callback/emit :log-message
+                 (str (item-representation item) " picked up")))
 
 (defn- pickup-items
   []
@@ -247,7 +249,9 @@
         (do
           (entity/remove active-item "equipped")
           (entity/remove active-item "in-inventory")
-          (entity/add active-item "position" player-position))))))
+          (entity/add active-item "position" player-position)
+          (callback/emit :log-message
+                         (str (item-representation active-item) " dropped")))))))
 
 (def bindings {73 toggle-inventory-overlay
                37 inventory-left

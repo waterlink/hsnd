@@ -47,7 +47,7 @@
   - [x] Show health in sidebar
   - [x] Show resurrection countdown
 
-- [ ] Inventory:
+- [x] Inventory:
   - [x] Some example items already in inventory
   - [x] Inventory overlay blocks player controls
   - [x] Inventory overlay lists items
@@ -58,7 +58,7 @@
   - [x] Inventory overlay allows to drop items (with d key)
   - [x] Item details can be shown with right arrow, left arrow returns to the list
   - [x] Equipping/de-equipping emits a log message
-  - [ ] Picking/Dropping up emits log message
+  - [x] Picking/Dropping up emits log message
 
 - [ ] Stats:
   - [ ] base stat: strength = 1 from start

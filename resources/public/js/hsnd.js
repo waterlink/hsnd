@@ -40381,12 +40381,12 @@ hsnd.systems.inventory.item_details_stats_view_count = function item_details_sta
   return hsnd.systems.inventory.view_count.call(null, hsnd.systems.inventory.stat_list_view, "p");
 };
 hsnd.systems.inventory.generic_list_view = function generic_list_view(current_count, view, index) {
-  var i_11034 = current_count;
+  var i_11082 = current_count;
   while (true) {
-    if (i_11034 < index) {
+    if (i_11082 < index) {
       domina.append_BANG_.call(null, view, "\x3cp\x3e\x3cp\x3e");
-      var G__11035 = i_11034 + 1;
-      i_11034 = G__11035;
+      var G__11083 = i_11082 + 1;
+      i_11082 = G__11083;
       continue;
     } else {
     }
@@ -40399,8 +40399,8 @@ hsnd.systems.inventory.generic_list_cleanup = function generic_list_cleanup(curr
   while (true) {
     if (i > new_count) {
       domina.set_text_BANG_.call(null, item_view_fn.call(null, i), "");
-      var G__11036 = i - 1;
-      i = G__11036;
+      var G__11084 = i - 1;
+      i = G__11084;
       continue;
     } else {
       return null;
@@ -40486,10 +40486,10 @@ hsnd.systems.inventory.item_representation = function item_representation(item) 
   var representation = equipped_QMARK_ ? [cljs.core.str(tile), cljs.core.str(" "), cljs.core.str(name), cljs.core.str(" (equipped)")].join("") : [cljs.core.str(tile), cljs.core.str(" "), cljs.core.str(name)].join("");
   return representation;
 };
-hsnd.systems.inventory.stat_representation = function stat_representation(p__11037) {
-  var vec__11039 = p__11037;
-  var stat_name = cljs.core.nth.call(null, vec__11039, 0, null);
-  var stat_effect = cljs.core.nth.call(null, vec__11039, 1, null);
+hsnd.systems.inventory.stat_representation = function stat_representation(p__11085) {
+  var vec__11087 = p__11085;
+  var stat_name = cljs.core.nth.call(null, vec__11087, 0, null);
+  var stat_effect = cljs.core.nth.call(null, vec__11087, 1, null);
   var effect = stat_effect > 0 ? [cljs.core.str("+"), cljs.core.str(stat_effect)].join("") : [cljs.core.str(stat_effect)].join("");
   return[cljs.core.str(effect), cljs.core.str(" "), cljs.core.str(cljs.core.name.call(null, stat_name))].join("");
 };
@@ -40540,7 +40540,8 @@ hsnd.systems.inventory.items_under_player_feet = function items_under_player_fee
 };
 hsnd.systems.inventory.pickup_item = function pickup_item(item) {
   hsnd.entity.remove.call(null, item, "position");
-  return hsnd.entity.add.call(null, item, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
+  hsnd.entity.add.call(null, item, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
+  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(hsnd.systems.inventory.item_representation.call(null, item)), cljs.core.str(" picked up")].join(""));
 };
 hsnd.systems.inventory.pickup_items = function pickup_items() {
   var player = cljs.core.first.call(null, hsnd.entity.each.call(null, "player"));
@@ -40548,9 +40549,9 @@ hsnd.systems.inventory.pickup_items = function pickup_items() {
   return cljs.core.doall.call(null, cljs.core.map.call(null, hsnd.systems.inventory.pickup_item, items));
 };
 hsnd.systems.inventory.equipped_in_slot_for = function equipped_in_slot_for(item) {
-  var map__11041 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, item, "equippable"));
-  var map__11041__$1 = cljs.core.seq_QMARK_.call(null, map__11041) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11041) : map__11041;
-  var slot = cljs.core.get.call(null, map__11041__$1, new cljs.core.Keyword(null, "slot", "slot", 240229571));
+  var map__11089 = hsnd.component.get_hash.call(null, hsnd.entity.get.call(null, item, "equippable"));
+  var map__11089__$1 = cljs.core.seq_QMARK_.call(null, map__11089) ? cljs.core.apply.call(null, cljs.core.hash_map, map__11089) : map__11089;
+  var slot = cljs.core.get.call(null, map__11089__$1, new cljs.core.Keyword(null, "slot", "slot", 240229571));
   return[cljs.core.str("equipped-in-slot:"), cljs.core.str(slot)].join("");
 };
 hsnd.systems.inventory.de_equip = function de_equip(item) {
@@ -40588,7 +40589,8 @@ hsnd.systems.inventory.drop_active_item = function drop_active_item() {
     if (cljs.core.truth_(active_item)) {
       hsnd.entity.remove.call(null, active_item, "equipped");
       hsnd.entity.remove.call(null, active_item, "in-inventory");
-      return hsnd.entity.add.call(null, active_item, "position", player_position);
+      hsnd.entity.add.call(null, active_item, "position", player_position);
+      return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(hsnd.systems.inventory.item_representation.call(null, active_item)), cljs.core.str(" dropped")].join(""));
     } else {
       return null;
     }
@@ -40609,10 +40611,10 @@ hsnd.systems.inventory.update = function update() {
 };
 hsnd.systems.inventory.draw = function draw() {
   if (hsnd.systems.inventory.inventory_active_QMARK_.call(null)) {
-    var items_11042 = hsnd.entity.each.call(null, "in-inventory");
-    var item_count_11043 = cljs.core.count.call(null, items_11042);
-    hsnd.systems.inventory.cleanup_list_view.call(null, item_count_11043);
-    cljs.core.doall.call(null, cljs.core.map_indexed.call(null, hsnd.systems.inventory.draw_inventory_item, items_11042));
+    var items_11090 = hsnd.entity.each.call(null, "in-inventory");
+    var item_count_11091 = cljs.core.count.call(null, items_11090);
+    hsnd.systems.inventory.cleanup_list_view.call(null, item_count_11091);
+    cljs.core.doall.call(null, cljs.core.map_indexed.call(null, hsnd.systems.inventory.draw_inventory_item, items_11090));
     if (hsnd.systems.inventory.details_active_QMARK_.call(null)) {
       return hsnd.systems.inventory.draw_item_details.call(null);
     } else {
