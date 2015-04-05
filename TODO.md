@@ -80,3 +80,8 @@
 - [ ] XP:
   - [ ] xp stat: 0/10, geometric progression with k=1.3
   - [ ] level up overlay - allows to distribute 2 base stat per level
+
+- [ ] Controls help:
+  - [ ] Appears on ? keypress
+  - [ ] Contains categorized list of controls (normal mode, inventory mode, etc)
+  - [ ] Generate this view out of datastructure
