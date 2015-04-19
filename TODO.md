@@ -77,9 +77,13 @@
   - [x] regen = (base regen + items regen)
   - [x] Regeneration system regenerates health up to max health based on regen stat
 
-- [ ] XP:
-  - [ ] xp stat: 0/10, geometric progression with k=1.3
-  - [ ] level up overlay - allows to distribute 2 base stat per level
+- [x] XP:
+  - [x] xp stat: 0/10, geometric progression with k=1.3
+  - [x] level up overlay - allows to distribute 2 base stat per level
+
+- [ ] Battle UI:
+  - [ ] store last target
+  - [ ] show health of last target in sidebar
 
 - [ ] Controls help:
   - [ ] Appears on ? keypress

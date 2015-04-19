@@ -18,14 +18,15 @@
   (callback/emit :log-message (str name " inflicted " damage " damage to you")))
 
 (defn- inflict-damage
-  [damage entity]
+  [damage entity attacker]
   (let [health-component (entity/get entity "health")
         health? (not (nil? health-component))]
-    (if health?
+    (when health?
       (component/set
        health-component
        :value
-       (-> (component/get health-component :value) (- damage))))))
+       (-> (component/get health-component :value) (- damage)))
+      (-> (entity/get-with-defaults entity "last-attacker" {:value nil}) (component/set :value attacker)))))
 
 (defn handle-collision
   [entity other-entity]
@@ -41,11 +42,11 @@
         damage (-> damage-stat (- armor) (max 0))]
 
     (when (-> player? (and other-enemy?))
-      (inflict-damage damage other-entity)
+      (inflict-damage damage other-entity entity)
       (log-damage-by-player damage other-name))
 
     (when (-> enemy? (and other-player?))
-      (inflict-damage damage other-entity)
+      (inflict-damage damage other-entity entity)
       (log-damage-by-enemy damage entity-name))))
 
 (def system {:init init

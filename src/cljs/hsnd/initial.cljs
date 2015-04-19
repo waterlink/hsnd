@@ -1,5 +1,6 @@
 (ns hsnd.initial
-  (:require [hsnd.entity :as entity]))
+  (:require [hsnd.entity :as entity]
+            [hsnd.registry :as registry]))
 
 (def player (entity/new "player"))
 (entity/add player "has-stats" {})
@@ -28,26 +29,20 @@
 (def example-log (entity/new "welcome-message"))
 (entity/add example-log "log-message" {:value "Welcome to Hack, Slash and Deathblaze!"})
 
-(def goblin (entity/new "goblin"))
-(entity/add goblin "has-stats" {})
-(entity/add goblin "position" {:x 15 :y 5})
-(entity/add goblin "tile" {:value "g"})
-(entity/add goblin "enemy" {})
-(entity/add goblin "strength" {:value 3})
-(entity/add goblin "endurance" {:value 0})
-(entity/add goblin "sight" {:radius 10})
-(entity/add goblin "melee-ai" {})
-(entity/add goblin "loot" {:value
-                           [["goblin body"
-                             [["tile" {:value "~"}]
-                              ["passable" {}]]]
-                            ["stone of regen"
-                             [["tile" {:value "="}]
-                              ["stats" {:regen 4}]
-                              ["item" {}]
-                              ["equippable" {:slot "accessory"}]
-                              ["cost" {:value 3000}]
-                              ["passable" {}]]]]})
+(def goblin-1 (registry/goblin "goblin"))
+(entity/add goblin-1 "position" {:x 15 :y 5})
+
+(def goblin-2 (registry/goblin "goblin"))
+(entity/add goblin-2 "position" {:x 20 :y 3})
+
+(def goblin-3 (registry/goblin "goblin"))
+(entity/add goblin-3 "position" {:x 13 :y 7})
+
+(def goblin-4 (registry/goblin "goblin"))
+(entity/add goblin-4 "position" {:x 12 :y 4})
+
+(def cheftain (registry/goblin-cheftain "goblin cheftain"))
+(entity/add cheftain "position" {:x 17 :y 10})
 
 (def small-knife (entity/new "small knife"))
 (entity/add small-knife "in-inventory" {})

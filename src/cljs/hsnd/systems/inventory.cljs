@@ -7,6 +7,7 @@
 
 (defn init [] nil)
 (defn keydown [] nil)
+(defn update [] nil)
 
 (defn- by-id [id] (xpath/xpath (str "//div[@id='" id "']")))
 
@@ -172,12 +173,6 @@
         (dom/set-text! details-description-view description)
         (draw-details-stats stats)))))
 
-(defn- update-player-busy
-  [player]
-  (let [busy-component (entity/get player "busy")
-        busy (inventory-active?)]
-    (component/set busy-component :value busy)))
-
 (defn- under-player-feet?
   [player item]
   (let [player-position-component (entity/get player "position")
@@ -231,13 +226,14 @@
 
 (defn- equip-active-item
   []
-  (let [active-item (get-active-item)]
-    (if active-item
-      (let [equipped? (not (nil? (entity/get active-item "equipped")))
-            equippable? (not (nil? (entity/get active-item "equippable")))
-            action (if equipped? de-equip equip)]
-        (if equippable?
-          (action active-item))))))
+  (if (inventory-active?)
+    (let [active-item (get-active-item)]
+      (if active-item
+        (let [equipped? (not (nil? (entity/get active-item "equipped")))
+              equippable? (not (nil? (entity/get active-item "equippable")))
+              action (if equipped? de-equip equip)]
+          (if equippable?
+            (action active-item)))))))
 
 (defn- drop-active-item
   []
@@ -266,10 +262,6 @@
   [key-code]
   (if (contains? bindings key-code)
     ((bindings key-code))))
-
-(defn update
-  []
-  (entity/each "player" update-player-busy))
 
 (defn draw
   []

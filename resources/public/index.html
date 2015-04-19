@@ -10,45 +10,25 @@
       <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
   </head>
+
   <body>
 
     <div id="main">
-      Loading...
     </div>
 
     <div id="sidebar">
       Pos:
-      <div id="stats-position" class="stats">
-        Loading...
-      </div>
-
-      <div id="stats-health" class="stats">
-        Loading...
-      </div>
-
-      <div id="stats-strength" class="stats">
-        Loading...
-      </div>
-
-      <div id="stats-endurance" class="stats">
-        Loading...
-      </div>
-
-      <div id="stats-damage" class="stats">
-        Loading...
-      </div>
-
-      <div id="stats-armor" class="stats">
-        Loading...
-      </div>
-
-      <div id="stats-regen" class="stats">
-        Loading...
-      </div>
-
-      <div id="message-log">
-        Loading...
-      </div>
+      <div id="stats-position" class="stats"> </div>
+      <div id="stats-level" class="stats"> </div>
+      <div id="stats-skill-points" class="stats"> </div>
+      <div id="stats-exp" class="stats"> </div>
+      <div id="stats-health" class="stats"> </div>
+      <div id="stats-strength" class="stats"> </div>
+      <div id="stats-endurance" class="stats"> </div>
+      <div id="stats-damage" class="stats"> </div>
+      <div id="stats-armor" class="stats"> </div>
+      <div id="stats-regen" class="stats"> </div>
+      <div id="message-log"> </div>
     </div>
 
     <div id="inventory-overlay" class="hide overlay">
@@ -56,7 +36,7 @@
       <div id="inventory-list"></div>
 
       <div id="item-details-overlay" class="hide overlay">
-        Item details (use right arrow to return to the inventory):
+        Item details (use left arrow to return to the inventory):
         <div id="item-details-name">item name</div>
         <div id="item-details-description">item description</div>
         <div id="item-details-stats">
@@ -65,10 +45,34 @@
           </div>
         </div>
       </div>
+    </div>
 
+    <div id="level-up-overlay" class="hide overlay">
+      <div id="player-name">[player name]</div>
+      <div id="stats-level" class="stats"> </div>
+      <div id="stats-exp" class="stats"> </div>
+      <div id="stats-health" class="stats"> </div>
+
+      <br/>
+      <em>
+      <div>Up and down arrows to select skill</div>
+      <div>Space to level it up</div>
+      </em>
+      <div>Base stats<span id="stats-skill-points"></span>:</div>
+      <div id="stats-strength" class="stats before-aside selectable"> </div>
+      <div class="stats"> [+HP, +DAM]</div>
+      <div id="stats-endurance" class="stats before-aside selectable"> </div>
+      <div class="stats"> [+HP, +ARM, +REG]</div>
+
+      <br/>
+      Secondary stats:
+      <div id="stats-damage" class="stats"> </div>
+      <div id="stats-armor" class="stats"> </div>
+      <div id="stats-regen" class="stats"> </div>
     </div>
 
     <!-- run javascript at the end -->
     <script src="js/hsnd.js"></script>
   </body>
+
 </html>

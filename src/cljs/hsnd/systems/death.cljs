@@ -24,10 +24,15 @@
   [entity]
   (callback/emit :log-message (str (entity :name) " dies")))
 
+(defn- emit-kill-event
+  [victim killer]
+  (callback/emit :kill victim killer))
+
 (defn- handle-death
   [entity]
   (let [health-component (entity/get entity "health")
         health (component/get health-component :value)
+        last-attacker (-> (entity/get-with-defaults entity "last-attacker" {:value nil}) (component/get :value))
         dead? (-> health (<= 0))
         not-handled-death? (nil? (entity/get entity "dead"))]
     (if (-> dead? (and not-handled-death?))
@@ -37,6 +42,11 @@
         (entity/remove entity "next-position")
         (entity/add entity "dead" {})
         (entity/add entity "position-of-death" position-hash)
+
+        (when-not (nil? last-attacker)
+          (entity/add entity "killed-by" last-attacker))
+
+        (emit-kill-event entity last-attacker)
         (log-death entity)))))
 
 (defn update

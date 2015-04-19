@@ -25,6 +25,16 @@
     (add entity name defaults))
   (get entity name))
 
+(defn get-value
+  "Fetches value out of single-value component"
+  ([entity name] (-> (get entity name) (component/get :value)))
+  ([entity name default] (-> (get-with-defaults entity name {:value default}) (component/get :value))))
+
+(defn set-value
+  "Sets value of single-value component"
+  [entity name value]
+  (-> (get-with-defaults entity name {:value value}) (component/set :value value)))
+
 (defn remove
   "Removes a component from entity"
   [entity name]

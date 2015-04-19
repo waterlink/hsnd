@@ -67,3 +67,16 @@ body {
 #inventory-list > p.active {
     font-weight: bold;
 }
+
+.before-aside {
+    float: left;
+    margin-right: 1em;
+}
+
+.stats.selectable.active {
+    font-weight: bold;
+}
+
+em {
+    font-size: 9pt;
+}

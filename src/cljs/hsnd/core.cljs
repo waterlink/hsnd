@@ -6,11 +6,14 @@
             [hsnd.systems.blocked :as blocked]
             [hsnd.systems.battle :as battle]
             [hsnd.systems.stats :as stats]
+            [hsnd.systems.xp :as xp]
             [hsnd.systems.death :as death]
             [hsnd.systems.regeneration :as regeneration]
             [hsnd.systems.resurrection :as resurrection]
             [hsnd.systems.loot :as loot]
+            [hsnd.systems.busy :as busy]
             [hsnd.systems.inventory :as inventory]
+            [hsnd.systems.levelup :as levelup]
             [hsnd.systems.melee-ai :as melee-ai]
             [hsnd.systems.current-position :as current-position]
             [hsnd.systems.log :as log]
@@ -24,8 +27,11 @@
 (def systems [draw/system
               current-position/system
               stats/system
+              xp/system
               control/system
+              busy/system
               inventory/system
+              levelup/system
               collision/system
               regeneration/system
               resurrection/system

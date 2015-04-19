@@ -8,11 +8,12 @@
 (defn keydown [] nil)
 (defn keyup [] nil)
 
-(defn- stat-query [name] (str "//div[@id='stats-" name "']"))
-(defn- stat-view-raw [name] (xpath/xpath (stat-query name)))
+(defn- stat-query [tag name] (str "//" tag "[@id='stats-" name "']"))
+(defn- stat-view-raw [tag name] (xpath/xpath (stat-query tag name)))
 (def stat-view (memoize stat-view-raw))
 
-(defn- set-stat-text! [name representation] (dom/set-text! (stat-view name) representation))
+(defn- set-stat-text! [name representation] (dom/set-text! (stat-view "div" name) representation))
+(defn- set-alternate-stat-text! [name representation] (dom/set-text! (stat-view "span" name) representation))
 
 (defn- get-stat-component
   [player stat-name default]
@@ -54,7 +55,21 @@
 
 (defn- draw-player-stats
   [player]
-  (let [max-health (get-stat player "max-health" 100)
+  (let [level (get-stat player "level" 0)
+        level-representation (str "Level " level)
+
+        max-xp (get-stat player "max-xp" 100)
+        xp (get-stat player "xp" 0)
+        xp-representation (str "EXP: " xp "/" max-xp)
+
+        skill-points (get-stat player "skill-points" 1)
+        press-c-tip (if (-> skill-points (> 0)) " [press C]" "")
+        skill-points-representation (str "SP: " skill-points press-c-tip)
+        skill-points-alternate-representation (if (-> skill-points (> 0))
+                                                (str " (" skill-points " skill points)")
+                                                "")
+
+        max-health (get-stat player "max-health" 100)
         health (get-stat player "health" max-health)
         strength (get-stat player "strength" 1)
         endurance (get-stat player "endurance" 1)
@@ -69,6 +84,12 @@
                    "damage" damage
                    "armor" armor
                    "regen" regen})
+
+    (set-stat-text! "level" level-representation)
+    (set-stat-text! "exp" xp-representation)
+
+    (set-stat-text! "skill-points" skill-points-representation)
+    (set-alternate-stat-text! "skill-points" skill-points-alternate-representation)
 
     (if alive?
       (let [representation (str "HP: " health "/" max-health)]
@@ -100,7 +121,10 @@
 
         item-regen (get-items-stat actor :regen)
         base-regen (set-stat actor "base-regen" (-> 1 (+ (-> endurance (quot 5)))))
-        regen (set-stat actor "regen" (-> base-regen (+ item-regen)))]
+        regen (set-stat actor "regen" (-> base-regen (+ item-regen)))
+
+        level (get-stat actor "level" 0)
+        max-xp (set-stat actor "max-xp" (-> 10 (* (Math/pow 1.3 level)) (int)))]
     nil))
 
 (defn draw
