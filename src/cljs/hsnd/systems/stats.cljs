@@ -24,7 +24,8 @@
 
 (defn- set-stat
   [player stat-name value]
-  (-> (get-stat-component player stat-name nil) (component/set :value value)))
+  (-> (get-stat-component player stat-name nil) (component/set :value value))
+  value)
 
 (defn- simple-render
   [[stat-name value]]
@@ -37,17 +38,19 @@
   (doall
    (map simple-render stats)))
 
-(defn- items-damage-fn
-  [acc item]
-  (let [damage (-> (entity/get-with-defaults item "stats" {}) (component/get :damage))]
-    (if damage
-      (-> acc (+ damage))
+(defn- items-stat-fn
+  [stat acc item]
+  (let [value (-> (entity/get-with-defaults item "stats" {}) (component/get stat))]
+    (if value
+      (-> acc (+ value))
       acc)))
 
-(defn- get-items-damage
-  [player]
-  (let [equipped-items (entity/each "equipped")]
-    (reduce items-damage-fn 0 equipped-items)))
+(defn- get-items-stat
+  [actor stat]
+  (if (entity/get actor "player")
+    (let [equipped-items (entity/each "equipped")]
+      (reduce (partial items-stat-fn stat) 0 equipped-items))
+    0))
 
 (defn- draw-player-stats
   [player]
@@ -74,15 +77,30 @@
             representation (str "RESPAWN: " resurrect-in)]
         (set-stat-text! "health" representation)))))
 
-(defn- calculate-player-stats
-  [player]
-  (let [strength (get-stat player "strength" 1)
-        endurance (get-stat player "endurance" 1)
-        item-damage (get-items-damage player)
-        base-damage (set-stat player "base-damage" strength)
-        damage-modifier (set-stat player "damage-modifier" (-> strength (quot 14)))
-        damage (set-stat player "damage" (-> base-damage (+ item-damage) (* (-> 1 (+ damage-modifier)))))]
-    (.log js/console item-damage)
+(defn- calculate-actor-stats
+  [actor]
+  (let [strength (get-stat actor "strength" 1)
+        endurance (get-stat actor "endurance" 1)
+
+        item-damage (get-items-stat actor :damage)
+        base-damage (set-stat actor "base-damage" strength)
+        damage-modifier (set-stat actor "damage-modifier" (-> strength (quot 14) (* 0.1)))
+        damage (set-stat actor "damage" (-> base-damage (+ item-damage) (* (-> 1 (+ damage-modifier))) (int)))
+
+        item-health (get-items-stat actor :health)
+        base-health (set-stat actor "base-health" (-> strength (* 35) (+ (-> endurance (* 65)))))
+        health-modifier (set-stat actor "health-modifier" (-> strength (+ endurance) (quot 14) (* 0.1)))
+        max-health (set-stat actor "max-health" (-> base-health (+ item-health) (* (-> 1 (+ health-modifier))) (int)))
+        health (get-stat actor "health" max-health)
+
+        item-armor (get-items-stat actor :armor)
+        base-armor (set-stat actor "base-armor" endurance)
+        armor-modifier (set-stat actor "armor-modifier" (-> endurance (quot 14) (* 0.1)))
+        armor (set-stat actor "armor" (-> base-armor (+ item-armor) (* (-> 1 (+ armor-modifier))) (int)))
+
+        item-regen (get-items-stat actor :regen)
+        base-regen (set-stat actor "base-regen" (-> 1 (+ (-> endurance (quot 5)))))
+        regen (set-stat actor "regen" (-> base-regen (+ item-regen)))]
     nil))
 
 (defn draw
@@ -91,7 +109,7 @@
 
 (defn update
   []
-  (entity/each "player-controlled" calculate-player-stats))
+  (entity/each "has-stats" calculate-actor-stats))
 
 (def system {:init init
              :draw draw

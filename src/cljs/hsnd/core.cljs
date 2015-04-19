@@ -7,6 +7,7 @@
             [hsnd.systems.battle :as battle]
             [hsnd.systems.stats :as stats]
             [hsnd.systems.death :as death]
+            [hsnd.systems.regeneration :as regeneration]
             [hsnd.systems.resurrection :as resurrection]
             [hsnd.systems.loot :as loot]
             [hsnd.systems.inventory :as inventory]
@@ -26,6 +27,7 @@
               control/system
               inventory/system
               collision/system
+              regeneration/system
               resurrection/system
               movement/system
               blocked/system

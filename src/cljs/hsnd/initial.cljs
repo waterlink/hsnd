@@ -2,6 +2,7 @@
   (:require [hsnd.entity :as entity]))
 
 (def player (entity/new "player"))
+(entity/add player "has-stats" {})
 (entity/add player "player" {})
 (entity/add player "position" {:x 7 :y 15})
 (entity/add player "tile" {:value "@"})
@@ -28,23 +29,24 @@
 (entity/add example-log "log-message" {:value "Welcome to Hack, Slash and Deathblaze!"})
 
 (def goblin (entity/new "goblin"))
+(entity/add goblin "has-stats" {})
 (entity/add goblin "position" {:x 15 :y 5})
 (entity/add goblin "tile" {:value "g"})
 (entity/add goblin "enemy" {})
-(entity/add goblin "damage" {:value 1})
+(entity/add goblin "strength" {:value 3})
+(entity/add goblin "endurance" {:value 0})
 (entity/add goblin "sight" {:radius 10})
 (entity/add goblin "melee-ai" {})
-(entity/add goblin "health" {:value 7})
 (entity/add goblin "loot" {:value
                            [["goblin body"
                              [["tile" {:value "~"}]
                               ["passable" {}]]]
-                            ["knife"
-                             [["tile" {:value "|"}]
-                              ["stats" {:damage 1}]
+                            ["stone of regen"
+                             [["tile" {:value "="}]
+                              ["stats" {:regen 4}]
                               ["item" {}]
-                              ["equippable" {:slot "weapon"}]
-                              ["cost" {:value 32}]
+                              ["equippable" {:slot "accessory"}]
+                              ["cost" {:value 3000}]
                               ["passable" {}]]]]})
 
 (def small-knife (entity/new "small knife"))
@@ -57,7 +59,7 @@
 
 (def leather-jacket (entity/new "leather jacket"))
 (entity/add leather-jacket "in-inventory" {})
-(entity/add leather-jacket "stats" {:armor 3})
+(entity/add leather-jacket "stats" {:armor 3 :health 20})
 (entity/add leather-jacket "equippable" {:slot "chest"})
 (entity/add leather-jacket "item" {})
 (entity/add leather-jacket "passable" {})

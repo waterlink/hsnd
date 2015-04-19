@@ -60,22 +60,22 @@
   - [x] Equipping/de-equipping emits a log message
   - [x] Picking/Dropping up emits log message
 
-- [ ] Stats:
+- [x] Stats:
   - [x] base stat: strength = 1 from start
   - [x] base stat: endurance = 1 from start
   - [x] base damage = strength
   - [x] damage modifier = (strength div 14) * 0.1
-  - [ ] damage = (base damage + items accumulated damage) * (1 + damage modifier)
-  - [ ] base armor = endurance
-  - [ ] armor modifier = (endurance div 14) * 0.1
-  - [ ] armor = (base armor + items accumulated armor) * (1 + armor modifier)
-  - [ ] base health = strength * 35 + endurance * 65
-  - [ ] health modifier = ((endurance + strength) / 14) * 0.1
-  - [ ] max health = (base health + items health bonus) * (1 + health modifier)
-  - [ ] Battle system uses armor to calculate damage
-  - [ ] base regen = 1 + (endurance div 5)
-  - [ ] regen = (base regen + items regen)
-  - [ ] Regeneration system regenerates health up to max health based on regen stat
+  - [x] damage = (base damage + items accumulated damage) * (1 + damage modifier)
+  - [x] base armor = endurance
+  - [x] armor modifier = (endurance div 14) * 0.1
+  - [x] armor = (base armor + items accumulated armor) * (1 + armor modifier)
+  - [x] base health = strength * 35 + endurance * 65
+  - [x] health modifier = ((endurance + strength) / 14) * 0.1
+  - [x] max health = (base health + items health bonus) * (1 + health modifier)
+  - [x] Battle system uses armor to calculate damage
+  - [x] base regen = 1 + (endurance div 5)
+  - [x] regen = (base regen + items regen)
+  - [x] Regeneration system regenerates health up to max health based on regen stat
 
 - [ ] XP:
   - [ ] xp stat: 0/10, geometric progression with k=1.3

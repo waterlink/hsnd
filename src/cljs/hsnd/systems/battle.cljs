@@ -35,16 +35,18 @@
         enemy? (not (nil? (entity/get entity "enemy")))
         other-player? (not (nil? (entity/get other-entity "player")))
         other-enemy? (not (nil? (entity/get other-entity "enemy")))
-        damage-component (entity/get entity "damage")
-        has-damage? (not (nil? damage-component))]
-    (if (-> player? (and other-enemy?) (and has-damage?))
-      (let [damage (component/get damage-component :value)]
-        (inflict-damage damage other-entity)
-        (log-damage-by-player damage other-name)))
-    (if (-> enemy? (and other-player?) (and has-damage?))
-      (let [damage (component/get damage-component :value)]
-        (inflict-damage damage other-entity)
-        (log-damage-by-enemy damage entity-name)))))
+        damage-component (entity/get-with-defaults entity "damage" {:value 0})
+        damage-stat (component/get damage-component :value)
+        armor (-> (entity/get-with-defaults other-entity "armor" {:value 0}) (component/get :value))
+        damage (-> damage-stat (- armor) (max 0))]
+
+    (when (-> player? (and other-enemy?))
+      (inflict-damage damage other-entity)
+      (log-damage-by-player damage other-name))
+
+    (when (-> enemy? (and other-player?))
+      (inflict-damage damage other-entity)
+      (log-damage-by-enemy damage entity-name))))
 
 (def system {:init init
              :draw draw
