@@ -61,10 +61,10 @@
   - [x] Picking/Dropping up emits log message
 
 - [ ] Stats:
-  - [ ] base stat: strength = 1 from start
-  - [ ] base stat: endurance = 1 from start
-  - [ ] base damage = strength
-  - [ ] damage modifier = (strength div 14) * 0.1
+  - [x] base stat: strength = 1 from start
+  - [x] base stat: endurance = 1 from start
+  - [x] base damage = strength
+  - [x] damage modifier = (strength div 14) * 0.1
   - [ ] damage = (base damage + items accumulated damage) * (1 + damage modifier)
   - [ ] base armor = endurance
   - [ ] armor modifier = (endurance div 14) * 0.1

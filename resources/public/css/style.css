@@ -24,6 +24,10 @@ body {
     width: 10em;
 }
 
+.stats {
+    font-family: monospace;
+}
+
 #message-log {
     font-size: 9pt;
     position: absolute;

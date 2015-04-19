@@ -7,10 +7,6 @@
 (entity/add player "tile" {:value "@"})
 (entity/add player "player-controlled" {:dx 0 :dy 0})
 (entity/add player "camera" {:active true})
-(entity/add player "base-damage" {:value 1})
-(entity/add player "damage" {:value 1})
-(entity/add player "health" {:value 100})
-(entity/add player "max-health" {:value 100})
 (entity/add player "busy" {:value false})
 
 (def rock (entity/new "rock"))
