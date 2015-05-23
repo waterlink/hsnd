@@ -81,9 +81,11 @@
   - [x] xp stat: 0/10, geometric progression with k=1.3
   - [x] level up overlay - allows to distribute 2 base stat per level
 
-- [ ] Battle UI:
-  - [ ] store last target
-  - [ ] show health of last target in sidebar
+- [x] Battle UI:
+  - [x] store last target
+  - [x] show health of last target in sidebar
+  - [x] show level of last target in sidebar
+  - [x] show DEAD if last target is dead in sidebar
 
 - [ ] Controls help:
   - [ ] Appears on ? keypress

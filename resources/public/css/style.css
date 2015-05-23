@@ -28,6 +28,10 @@ body {
     font-family: monospace;
 }
 
+#target {
+  margin-top: 20px;
+}
+
 #message-log {
     font-size: 9pt;
     position: absolute;

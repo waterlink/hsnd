@@ -34348,118 +34348,6 @@ hsnd.entity.each = function() {
 hsnd.entity.reduce = function reduce(component_name, func, value) {
   return cljs.core.reduce.call(null, func, value, hsnd.entity.entities_with.call(null, component_name));
 };
-goog.provide("hsnd.systems.battle");
-goog.require("cljs.core");
-goog.require("hsnd.callback");
-goog.require("hsnd.component");
-goog.require("hsnd.entity");
-hsnd.systems.battle.init = function init() {
-  return null;
-};
-hsnd.systems.battle.draw = function draw() {
-  return null;
-};
-hsnd.systems.battle.keydown = function keydown() {
-  return null;
-};
-hsnd.systems.battle.keyup = function keyup() {
-  return null;
-};
-hsnd.systems.battle.update = function update() {
-  return null;
-};
-hsnd.systems.battle.log_damage_by_player = function log_damage_by_player(damage, name) {
-  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str("you inflicted "), cljs.core.str(damage), cljs.core.str(" damage to "), cljs.core.str(name)].join(""));
-};
-hsnd.systems.battle.log_damage_by_enemy = function log_damage_by_enemy(damage, name) {
-  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(name), cljs.core.str(" inflicted "), cljs.core.str(damage), cljs.core.str(" damage to you")].join(""));
-};
-hsnd.systems.battle.inflict_damage = function inflict_damage(damage, entity, attacker) {
-  var health_component = hsnd.entity.get.call(null, entity, "health");
-  var health_QMARK_ = !(health_component == null);
-  if (health_QMARK_) {
-    hsnd.component.set.call(null, health_component, new cljs.core.Keyword(null, "value", "value", 305978217), hsnd.component.get.call(null, health_component, new cljs.core.Keyword(null, "value", "value", 305978217)) - damage);
-    return hsnd.component.set.call(null, hsnd.entity.get_with_defaults.call(null, entity, "last-attacker", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), null], null)), new cljs.core.Keyword(null, "value", "value", 305978217), attacker);
-  } else {
-    return null;
-  }
-};
-hsnd.systems.battle.handle_collision = function handle_collision(entity, other_entity) {
-  var entity_name = entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177));
-  var other_name = other_entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177));
-  var player_QMARK_ = !(hsnd.entity.get.call(null, entity, "player") == null);
-  var enemy_QMARK_ = !(hsnd.entity.get.call(null, entity, "enemy") == null);
-  var other_player_QMARK_ = !(hsnd.entity.get.call(null, other_entity, "player") == null);
-  var other_enemy_QMARK_ = !(hsnd.entity.get.call(null, other_entity, "enemy") == null);
-  var damage_component = hsnd.entity.get_with_defaults.call(null, entity, "damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 0], null));
-  var damage_stat = hsnd.component.get.call(null, damage_component, new cljs.core.Keyword(null, "value", "value", 305978217));
-  var armor = hsnd.component.get.call(null, hsnd.entity.get_with_defaults.call(null, other_entity, "armor", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 0], null)), new cljs.core.Keyword(null, "value", "value", 305978217));
-  var damage = function() {
-    var x__9100__auto__ = damage_stat - armor;
-    var y__9101__auto__ = 0;
-    return x__9100__auto__ > y__9101__auto__ ? x__9100__auto__ : y__9101__auto__;
-  }();
-  if (player_QMARK_ && other_enemy_QMARK_) {
-    hsnd.systems.battle.inflict_damage.call(null, damage, other_entity, entity);
-    hsnd.systems.battle.log_damage_by_player.call(null, damage, other_name);
-  } else {
-  }
-  if (enemy_QMARK_ && other_player_QMARK_) {
-    hsnd.systems.battle.inflict_damage.call(null, damage, other_entity, entity);
-    return hsnd.systems.battle.log_damage_by_enemy.call(null, damage, entity_name);
-  } else {
-    return null;
-  }
-};
-hsnd.systems.battle.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.battle.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.battle.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.battle.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.battle.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.battle.keyup, 
-new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.battle.handle_collision], null)], null);
-goog.provide("hsnd.systems.xp");
-goog.require("cljs.core");
-goog.require("hsnd.entity");
-goog.require("hsnd.component");
-hsnd.systems.xp.init = function init() {
-  return null;
-};
-hsnd.systems.xp.keydown = function keydown() {
-  return null;
-};
-hsnd.systems.xp.keyup = function keyup() {
-  return null;
-};
-hsnd.systems.xp.draw = function draw() {
-  return null;
-};
-hsnd.systems.xp.update = function update() {
-  return null;
-};
-hsnd.systems.xp.get_stat = function get_stat(actor, stat, default$) {
-  return hsnd.component.get.call(null, hsnd.entity.get_with_defaults.call(null, actor, stat, new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), default$], null)), new cljs.core.Keyword(null, "value", "value", 305978217));
-};
-hsnd.systems.xp.set_stat = function set_stat(actor, stat, value) {
-  return hsnd.component.set.call(null, hsnd.entity.get.call(null, actor, stat), new cljs.core.Keyword(null, "value", "value", 305978217), value);
-};
-hsnd.systems.xp.handle_possible_levelup = function handle_possible_levelup(killer) {
-  var skill_points = hsnd.systems.xp.get_stat.call(null, killer, "skill-points", 0);
-  var level = hsnd.systems.xp.get_stat.call(null, killer, "level", 0);
-  var xp = hsnd.systems.xp.get_stat.call(null, killer, "xp", 0);
-  var max_xp = hsnd.systems.xp.get_stat.call(null, killer, "max-xp", 100);
-  var levelup_QMARK_ = xp >= max_xp;
-  if (levelup_QMARK_) {
-    hsnd.systems.xp.set_stat.call(null, killer, "level", level + 1);
-    return hsnd.systems.xp.set_stat.call(null, killer, "skill-points", skill_points + 2);
-  } else {
-    return null;
-  }
-};
-hsnd.systems.xp.handle_kill = function handle_kill(victim, killer) {
-  var level = hsnd.systems.xp.get_stat.call(null, victim, "level", 0);
-  var gives_xp = hsnd.systems.xp.get_stat.call(null, victim, "gives-xp", level);
-  var xp = hsnd.systems.xp.get_stat.call(null, killer, "xp", 0);
-  hsnd.systems.xp.set_stat.call(null, killer, "xp", xp + gives_xp);
-  return hsnd.systems.xp.handle_possible_levelup.call(null, killer);
-};
-hsnd.systems.xp.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.xp.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.xp.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.xp.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.xp.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.xp.keyup, new cljs.core.Keyword(null, 
-"listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "kill", "kill", -12335575), hsnd.systems.xp.handle_kill], null)], null);
 goog.provide("goog.functions");
 goog.functions.constant = function(retValue) {
   return function() {
@@ -39957,6 +39845,149 @@ domina.xpath.xpath = function() {
   xpath.cljs$core$IFn$_invoke$arity$2 = xpath__2;
   return xpath;
 }();
+goog.provide("hsnd.systems.battle");
+goog.require("cljs.core");
+goog.require("hsnd.entity");
+goog.require("hsnd.callback");
+goog.require("domina");
+goog.require("domina.xpath");
+goog.require("hsnd.component");
+hsnd.systems.battle.init = function init() {
+  return null;
+};
+hsnd.systems.battle.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.battle.keyup = function keyup() {
+  return null;
+};
+hsnd.systems.battle.update = function update() {
+  return null;
+};
+hsnd.systems.battle.target_query = function target_query(tag, name) {
+  return[cljs.core.str("//"), cljs.core.str(tag), cljs.core.str("[@id\x3d'target-"), cljs.core.str(name), cljs.core.str("']")].join("");
+};
+hsnd.systems.battle.target_view_raw = function target_view_raw(tag, name) {
+  return domina.xpath.xpath.call(null, hsnd.systems.battle.target_query.call(null, tag, name));
+};
+hsnd.systems.battle.target_view = cljs.core.memoize.call(null, hsnd.systems.battle.target_view_raw);
+hsnd.systems.battle.set_target_text_BANG_ = function set_target_text_BANG_(name, representation) {
+  return domina.set_text_BANG_.call(null, hsnd.systems.battle.target_view.call(null, "div", name), representation);
+};
+hsnd.systems.battle.log_damage_by_player = function log_damage_by_player(damage, name) {
+  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str("you inflicted "), cljs.core.str(damage), cljs.core.str(" damage to "), cljs.core.str(name)].join(""));
+};
+hsnd.systems.battle.log_damage_by_enemy = function log_damage_by_enemy(damage, name) {
+  return hsnd.callback.emit.call(null, new cljs.core.Keyword(null, "log-message", "log-message", -1434597634), [cljs.core.str(name), cljs.core.str(" inflicted "), cljs.core.str(damage), cljs.core.str(" damage to you")].join(""));
+};
+hsnd.systems.battle.inflict_damage = function inflict_damage(damage, entity, attacker) {
+  var health_component = hsnd.entity.get.call(null, entity, "health");
+  var health_QMARK_ = !(health_component == null);
+  if (health_QMARK_) {
+    hsnd.component.set.call(null, health_component, new cljs.core.Keyword(null, "value", "value", 305978217), hsnd.component.get.call(null, health_component, new cljs.core.Keyword(null, "value", "value", 305978217)) - damage);
+    hsnd.component.set.call(null, hsnd.entity.get_with_defaults.call(null, entity, "last-attacker", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), null], null)), new cljs.core.Keyword(null, "value", "value", 305978217), attacker);
+    return hsnd.component.set.call(null, hsnd.entity.get_with_defaults.call(null, attacker, "last-target", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), null], null)), new cljs.core.Keyword(null, "value", "value", 305978217), entity);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.battle.draw_player_target_stats = function draw_player_target_stats(player) {
+  var temp__4126__auto__ = hsnd.entity.get_value.call(null, player, "last-target", null);
+  if (cljs.core.truth_(temp__4126__auto__)) {
+    var target = temp__4126__auto__;
+    var name = (new cljs.core.Keyword(null, "name", "name", 1843675177)).cljs$core$IFn$_invoke$arity$1(target);
+    var name_repr = [cljs.core.str("Target: "), cljs.core.str(name)].join("");
+    var level = hsnd.entity.get_value.call(null, target, "level");
+    var level_repr = [cljs.core.str("LVL: "), cljs.core.str(level)].join("");
+    var health = hsnd.entity.get_value.call(null, target, "health");
+    var alive_QMARK_ = hsnd.entity.get.call(null, target, "dead") == null;
+    var health_repr = alive_QMARK_ ? [cljs.core.str("HP: "), cljs.core.str(health)].join("") : "DEAD";
+    hsnd.systems.battle.set_target_text_BANG_.call(null, "name", name_repr);
+    hsnd.systems.battle.set_target_text_BANG_.call(null, "level", level_repr);
+    return hsnd.systems.battle.set_target_text_BANG_.call(null, "health", health_repr);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.battle.draw = function draw() {
+  return hsnd.entity.each.call(null, "player-controlled", hsnd.systems.battle.draw_player_target_stats);
+};
+hsnd.systems.battle.handle_collision = function handle_collision(entity, other_entity) {
+  var entity_name = entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177));
+  var other_name = other_entity.call(null, new cljs.core.Keyword(null, "name", "name", 1843675177));
+  var player_QMARK_ = !(hsnd.entity.get.call(null, entity, "player") == null);
+  var enemy_QMARK_ = !(hsnd.entity.get.call(null, entity, "enemy") == null);
+  var other_player_QMARK_ = !(hsnd.entity.get.call(null, other_entity, "player") == null);
+  var other_enemy_QMARK_ = !(hsnd.entity.get.call(null, other_entity, "enemy") == null);
+  var damage_component = hsnd.entity.get_with_defaults.call(null, entity, "damage", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 0], null));
+  var damage_stat = hsnd.component.get.call(null, damage_component, new cljs.core.Keyword(null, "value", "value", 305978217));
+  var armor = hsnd.component.get.call(null, hsnd.entity.get_with_defaults.call(null, other_entity, "armor", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 0], null)), new cljs.core.Keyword(null, "value", "value", 305978217));
+  var damage = function() {
+    var x__9100__auto__ = damage_stat - armor;
+    var y__9101__auto__ = 0;
+    return x__9100__auto__ > y__9101__auto__ ? x__9100__auto__ : y__9101__auto__;
+  }();
+  if (player_QMARK_ && other_enemy_QMARK_) {
+    hsnd.systems.battle.inflict_damage.call(null, damage, other_entity, entity);
+    hsnd.systems.battle.log_damage_by_player.call(null, damage, other_name);
+  } else {
+  }
+  if (enemy_QMARK_ && other_player_QMARK_) {
+    hsnd.systems.battle.inflict_damage.call(null, damage, other_entity, entity);
+    return hsnd.systems.battle.log_damage_by_enemy.call(null, damage, entity_name);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.battle.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.battle.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.battle.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.battle.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.battle.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.battle.keyup, 
+new cljs.core.Keyword(null, "listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "collision", "collision", -201625508), hsnd.systems.battle.handle_collision], null)], null);
+goog.provide("hsnd.systems.xp");
+goog.require("cljs.core");
+goog.require("hsnd.entity");
+goog.require("hsnd.component");
+hsnd.systems.xp.init = function init() {
+  return null;
+};
+hsnd.systems.xp.keydown = function keydown() {
+  return null;
+};
+hsnd.systems.xp.keyup = function keyup() {
+  return null;
+};
+hsnd.systems.xp.draw = function draw() {
+  return null;
+};
+hsnd.systems.xp.update = function update() {
+  return null;
+};
+hsnd.systems.xp.get_stat = function get_stat(actor, stat, default$) {
+  return hsnd.component.get.call(null, hsnd.entity.get_with_defaults.call(null, actor, stat, new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), default$], null)), new cljs.core.Keyword(null, "value", "value", 305978217));
+};
+hsnd.systems.xp.set_stat = function set_stat(actor, stat, value) {
+  return hsnd.component.set.call(null, hsnd.entity.get.call(null, actor, stat), new cljs.core.Keyword(null, "value", "value", 305978217), value);
+};
+hsnd.systems.xp.handle_possible_levelup = function handle_possible_levelup(killer) {
+  var skill_points = hsnd.systems.xp.get_stat.call(null, killer, "skill-points", 0);
+  var level = hsnd.systems.xp.get_stat.call(null, killer, "level", 0);
+  var xp = hsnd.systems.xp.get_stat.call(null, killer, "xp", 0);
+  var max_xp = hsnd.systems.xp.get_stat.call(null, killer, "max-xp", 100);
+  var levelup_QMARK_ = xp >= max_xp;
+  if (levelup_QMARK_) {
+    hsnd.systems.xp.set_stat.call(null, killer, "level", level + 1);
+    return hsnd.systems.xp.set_stat.call(null, killer, "skill-points", skill_points + 2);
+  } else {
+    return null;
+  }
+};
+hsnd.systems.xp.handle_kill = function handle_kill(victim, killer) {
+  var level = hsnd.systems.xp.get_stat.call(null, victim, "level", 0);
+  var gives_xp = hsnd.systems.xp.get_stat.call(null, victim, "gives-xp", level);
+  var xp = hsnd.systems.xp.get_stat.call(null, killer, "xp", 0);
+  hsnd.systems.xp.set_stat.call(null, killer, "xp", xp + gives_xp);
+  return hsnd.systems.xp.handle_possible_levelup.call(null, killer);
+};
+hsnd.systems.xp.system = new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null, "init", "init", -1875481434), hsnd.systems.xp.init, new cljs.core.Keyword(null, "draw", "draw", 1358331674), hsnd.systems.xp.draw, new cljs.core.Keyword(null, "update", "update", 1045576396), hsnd.systems.xp.update, new cljs.core.Keyword(null, "keydown", "keydown", -629268186), hsnd.systems.xp.keydown, new cljs.core.Keyword(null, "keyup", "keyup", -794526927), hsnd.systems.xp.keyup, new cljs.core.Keyword(null, 
+"listeners", "listeners", 394544445), new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "kill", "kill", -12335575), hsnd.systems.xp.handle_kill], null)], null);
 goog.provide("hsnd.systems.current_position");
 goog.require("cljs.core");
 goog.require("domina.xpath");
