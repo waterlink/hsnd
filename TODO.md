@@ -87,6 +87,16 @@
   - [x] show level of last target in sidebar
   - [x] show DEAD if last target is dead in sidebar
 
+- [ ] Story mode:
+  - [ ] Use clojure to describe
+  - [ ] NPC
+  - [ ] Talk to npc
+  - [ ] Location trigger
+  - [ ] Movement tutorial
+  - [ ] Talk tutorial
+  - [ ] Battle tutorial
+  - [x] Describe layout with string
+
 - [ ] Controls help:
   - [ ] Appears on ? keypress
   - [ ] Contains categorized list of controls (normal mode, inventory mode, etc)

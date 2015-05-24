@@ -40500,6 +40500,37 @@ hsnd.systems.regeneration.keyup], null);
 goog.provide("hsnd.registry");
 goog.require("cljs.core");
 goog.require("hsnd.entity");
+hsnd.registry.player = function player(name) {
+  var x = hsnd.entity.new$.call(null, name);
+  hsnd.entity.add.call(null, x, "has-stats", cljs.core.PersistentArrayMap.EMPTY);
+  hsnd.entity.add.call(null, x, "player", cljs.core.PersistentArrayMap.EMPTY);
+  hsnd.entity.add.call(null, x, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "@"], null));
+  hsnd.entity.add.call(null, x, "player-controlled", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "dx", "dx", -381796732), 0, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 0], null));
+  hsnd.entity.add.call(null, x, "camera", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "active", "active", 1895962068), true], null));
+  hsnd.entity.add.call(null, x, "busy", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), false], null));
+  return x;
+};
+hsnd.registry.resurrection_stone = function resurrection_stone(name, radius, active) {
+  var x = hsnd.entity.new$.call(null, name);
+  var active_QMARK_ = cljs.core._EQ_.call(null, new cljs.core.Keyword(null, "active", "active", 1895962068), active);
+  hsnd.entity.add.call(null, x, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "\u00ae"], null));
+  hsnd.entity.add.call(null, x, "resurrection-stone", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "radius", "radius", -2073122258), radius], null));
+  if (active_QMARK_) {
+    hsnd.entity.add.call(null, x, "resurrection-stone-active", cljs.core.PersistentArrayMap.EMPTY);
+  } else {
+  }
+  return x;
+};
+hsnd.registry.towncentre = function towncentre(town_name, radius, active) {
+  var name = [cljs.core.str(town_name), cljs.core.str(" Towncentre")].join("");
+  var x = hsnd.registry.resurrection_stone.call(null, name, radius, active);
+  return x;
+};
+hsnd.registry.wall = function wall(name) {
+  var x = hsnd.entity.new$.call(null, name);
+  hsnd.entity.add.call(null, x, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "#"], null));
+  return x;
+};
 hsnd.registry.goblin = function goblin(name) {
   var x = hsnd.entity.new$.call(null, name);
   hsnd.entity.add.call(null, x, "has-stats", cljs.core.PersistentArrayMap.EMPTY);
@@ -40531,64 +40562,53 @@ hsnd.registry.goblin_cheftain = function goblin_cheftain(name) {
   null)], null)], null)], null)], null));
   return x;
 };
-goog.provide("hsnd.initial");
+goog.provide("hsnd.story_mode");
 goog.require("cljs.core");
 goog.require("hsnd.registry");
 goog.require("hsnd.entity");
-hsnd.initial.player = hsnd.entity.new$.call(null, "player");
-hsnd.entity.add.call(null, hsnd.initial.player, "has-stats", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.player, "player", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.player, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 7, new cljs.core.Keyword(null, "y", "y", -1757859776), 15], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "@"], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "player-controlled", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "dx", "dx", -381796732), 0, new cljs.core.Keyword(null, "dy", "dy", 1719547243), 0], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "camera", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "active", "active", 1895962068), true], null));
-hsnd.entity.add.call(null, hsnd.initial.player, "busy", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), false], null));
-hsnd.initial.rock = hsnd.entity.new$.call(null, "rock");
-hsnd.entity.add.call(null, hsnd.initial.rock, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 5, new cljs.core.Keyword(null, "y", "y", -1757859776), 5], null));
-hsnd.entity.add.call(null, hsnd.initial.rock, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "#"], null));
-hsnd.initial.resurrection_stone = hsnd.entity.new$.call(null, "resurrection stone");
-hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 25, new cljs.core.Keyword(null, "y", "y", -1757859776), 25], null));
-hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "\u00ae"], null));
-hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "resurrection-stone", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "radius", "radius", -2073122258), 5], null));
-hsnd.entity.add.call(null, hsnd.initial.resurrection_stone, "resurrection-stone-active", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.initial.resurrection_stone_2 = hsnd.entity.new$.call(null, "resurrection stone");
-hsnd.entity.add.call(null, hsnd.initial.resurrection_stone_2, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), -5, new cljs.core.Keyword(null, "y", "y", -1757859776), -5], null));
-hsnd.entity.add.call(null, hsnd.initial.resurrection_stone_2, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "\u00ae"], null));
-hsnd.entity.add.call(null, hsnd.initial.resurrection_stone_2, "resurrection-stone", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "radius", "radius", -2073122258), 10], null));
-hsnd.initial.example_log = hsnd.entity.new$.call(null, "welcome-message");
-hsnd.entity.add.call(null, hsnd.initial.example_log, "log-message", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "Welcome to Hack, Slash and Deathblaze!"], null));
-hsnd.initial.goblin_1 = hsnd.registry.goblin.call(null, "goblin");
-hsnd.entity.add.call(null, hsnd.initial.goblin_1, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 15, new cljs.core.Keyword(null, "y", "y", -1757859776), 5], null));
-hsnd.initial.goblin_2 = hsnd.registry.goblin.call(null, "goblin");
-hsnd.entity.add.call(null, hsnd.initial.goblin_2, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 20, new cljs.core.Keyword(null, "y", "y", -1757859776), 3], null));
-hsnd.initial.goblin_3 = hsnd.registry.goblin.call(null, "goblin");
-hsnd.entity.add.call(null, hsnd.initial.goblin_3, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 13, new cljs.core.Keyword(null, "y", "y", -1757859776), 7], null));
-hsnd.initial.goblin_4 = hsnd.registry.goblin.call(null, "goblin");
-hsnd.entity.add.call(null, hsnd.initial.goblin_4, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 12, new cljs.core.Keyword(null, "y", "y", -1757859776), 4], null));
-hsnd.initial.cheftain = hsnd.registry.goblin_cheftain.call(null, "goblin cheftain");
-hsnd.entity.add.call(null, hsnd.initial.cheftain, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), 17, new cljs.core.Keyword(null, "y", "y", -1757859776), 10], null));
-hsnd.initial.small_knife = hsnd.entity.new$.call(null, "small knife");
-hsnd.entity.add.call(null, hsnd.initial.small_knife, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.small_knife, "stats", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "damage", "damage", 970520018), 2], null));
-hsnd.entity.add.call(null, hsnd.initial.small_knife, "equippable", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "slot", "slot", 240229571), "weapon"], null));
-hsnd.entity.add.call(null, hsnd.initial.small_knife, "item", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.small_knife, "passable", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.small_knife, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "|"], null));
-hsnd.initial.leather_jacket = hsnd.entity.new$.call(null, "leather jacket");
-hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "stats", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "armor", "armor", -829575337), 3, new cljs.core.Keyword(null, "health", "health", -295520649), 20], null));
-hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "equippable", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "slot", "slot", 240229571), "chest"], null));
-hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "item", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "passable", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.leather_jacket, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "["], null));
-hsnd.initial.junk = hsnd.entity.new$.call(null, "some junk");
-hsnd.entity.add.call(null, hsnd.initial.junk, "in-inventory", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.junk, "description", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "Useless junk"], null));
-hsnd.entity.add.call(null, hsnd.initial.junk, "item", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.junk, "passable", cljs.core.PersistentArrayMap.EMPTY);
-hsnd.entity.add.call(null, hsnd.initial.junk, "tile", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), "%"], null));
-hsnd.initial.active_inventory_item = hsnd.entity.new$.call(null, "active inventory item");
-hsnd.entity.add.call(null, hsnd.initial.active_inventory_item, "inventory-active-item", new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null, "value", "value", 305978217), 0], null));
+hsnd.story_mode.player = function player() {
+  var x = cljs.core.first.call(null, hsnd.entity.entities_with.call(null, "player"));
+  if (x == null) {
+    return hsnd.registry.player.call(null, "player");
+  } else {
+    return x;
+  }
+};
+hsnd.story_mode.layout_char = function layout_char(p__10783, signs, index, character) {
+  var vec__10785 = p__10783;
+  var x = cljs.core.nth.call(null, vec__10785, 0, null);
+  var y = cljs.core.nth.call(null, vec__10785, 1, null);
+  var x__$1 = x + index;
+  var factory = cljs.core.get.call(null, signs, character);
+  if (factory == null) {
+    return null;
+  } else {
+    var e = factory.call(null);
+    return hsnd.entity.add.call(null, e, "position", new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null, "x", "x", 2099068185), x__$1, new cljs.core.Keyword(null, "y", "y", -1757859776), y], null));
+  }
+};
+hsnd.story_mode.layout_line = function layout_line(p__10786, signs, index, line) {
+  var vec__10788 = p__10786;
+  var x = cljs.core.nth.call(null, vec__10788, 0, null);
+  var y = cljs.core.nth.call(null, vec__10788, 1, null);
+  return cljs.core.doall.call(null, cljs.core.map_indexed.call(null, cljs.core.partial.call(null, hsnd.story_mode.layout_char, new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [x, y + index], null), signs), line));
+};
+hsnd.story_mode.layout = function layout(p__10789, strings, signs) {
+  var vec__10791 = p__10789;
+  var x = cljs.core.nth.call(null, vec__10791, 0, null);
+  var y = cljs.core.nth.call(null, vec__10791, 1, null);
+  return cljs.core.doall.call(null, cljs.core.map_indexed.call(null, cljs.core.partial.call(null, hsnd.story_mode.layout_line, new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [x, y], null), signs), strings));
+};
+goog.provide("hsnd.initial");
+goog.require("cljs.core");
+goog.require("hsnd.registry");
+goog.require("hsnd.story_mode");
+hsnd.story_mode.layout.call(null, new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [0, 0], null), new cljs.core.PersistentVector(null, 28, 5, cljs.core.PersistentVector.EMPTY_NODE, ["...........................................................................", "....###########..................###############################...........", "....#.........##................##............................##...........", "....#..........#.........########..............................##..........", 
+"....#..........##......###.....................................##..........", "....#...........########........................................##.........", "....#............................................................##........", "....#.............................................................#........", "....#.............................................................#........", "....#.............................................................#........", "....#.............................................................#........", 
+"....#............................................................##........", "....#...........................................................##.........", "....#..........................................................##..........", "....#..................................T......................##...........", "....#...............................@........................##............", "....#.......................................................##.............", "....#......................................................##..............", 
+"....#.....................................................##...............", "....#....................................................##................", "....#...................................................##.................", "....#..................................................##..................", "....#.................................................##...................", "....#.................................................##...................", "....#.................................................##...................", 
+"....####################################################...................", "...........................................................................", "..........................................................................."], null), new cljs.core.PersistentArrayMap(null, 3, ["T", cljs.core.partial.call(null, hsnd.registry.towncentre, "Forstford", 35, new cljs.core.Keyword(null, "active", "active", 1895962068)), "@", hsnd.story_mode.player, "#", cljs.core.partial.call(null, hsnd.registry.wall, 
+"town wall")], null));
 goog.provide("hsnd.systems.camera");
 goog.require("cljs.core");
 goog.require("hsnd.entity");
